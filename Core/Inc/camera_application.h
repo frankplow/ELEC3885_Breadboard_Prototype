@@ -17,8 +17,11 @@
 #include "stdlib.h"
 #include "string.h"
 
-#define CAMERA_FRAME_BUFFER               0xC0260000
-#define LCD_FRAME_BUFFER                  0xC0130000
+#define CAM_FB_SIZE 259200
+uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+
+#define LCD_FB_SIZE CAM_FB_SIZE
+char lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 
 void initialiseCapture(void);
 void BSP_CAMERA_LineEventCallback(void);

@@ -47,6 +47,7 @@ MEMORY
   DTCM     (rw)   : ORIGIN = 0x20000000,   LENGTH = 64K
   RAM    (xrw)    : ORIGIN = 0x20010000,   LENGTH = 256K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
+  SDRAM    (rw)   : ORIGIN = 0xc0000000,   LENGTH = 64M
 }
 
 /* Sections */
@@ -174,6 +175,18 @@ SECTIONS
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
   } >RAM
+
+  /* .sdram region for external SDRAM. Data will only be placed in here explicitly */
+  .sdram : 
+  {
+    . = ALIGN(4);
+    _sdtcm = .;        /* create a global symbol at data start */
+    *(.sdram)           /* .data sections */
+    *(.sdram*)          /* .data* sections */
+
+    . = ALIGN(4);
+    _edtcm = .;        /* define a global symbol at data end */
+  } >SDRAM
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
