@@ -138,9 +138,14 @@ void            TS_IO_Delay(uint32_t Delay);
 /* CAMERA IO functions */
 void            CAMERA_IO_Init(void);
 void            CAMERA_Delay(uint32_t Delay);
-// change the input interface of CAMERA_IO_Write and CAMERA_IO_Read to handle 16 bit registers
-void    CAMERA_IO_Write(uint16_t DeviceAddr, uint16_t Reg, uint8_t Value);
-uint8_t CAMERA_IO_Read (uint16_t DeviceAddr, uint16_t Reg);
+//ov2640, ov9655
+void            CAMERA_IO_Write(uint8_t Addr, uint8_t Reg, uint8_t Value);
+uint8_t         CAMERA_IO_Read(uint8_t Addr, uint8_t Reg);
+
+//ov5640 change the input interface of CAMERA_IO_Write and CAMERA_IO_Read to handle 16 bit registers
+
+void    CAMERA_IO_Write_OV5640(uint16_t DeviceAddr, uint16_t Reg, uint8_t Value);
+uint8_t CAMERA_IO_Read_OV5640(uint16_t DeviceAddr, uint16_t Reg);
 
 /* I2C EEPROM IO function */
 void                EEPROM_IO_Init(void);
@@ -733,70 +738,49 @@ void CAMERA_IO_Init(void)
   I2Cx_Init(&hI2cExtHandler);
 }
 
-#define MEMADD
-#ifdef MEMADD
 /**
   * @brief  Camera writes single data.
-  * @param  DeviceAddr: I2C address
-  * @param  Reg: Register address
+  * @param  Addr: I2C address
+  * @param  Reg: Register address 
   * @param  Value: Data to be written
   * @retval None
   */
-void CAMERA_IO_Write(uint16_t DeviceAddr, uint16_t Reg, uint8_t value)
+void CAMERA_IO_Write(uint8_t Addr, uint8_t Reg, uint8_t Value)
 {
-  I2Cx_WriteMultiple(&hI2cExtHandler, DeviceAddr, (uint16_t)Reg, I2C_MEMADD_SIZE_16BIT,(uint8_t*)&value, 1);
+  I2Cx_WriteMultiple(&hI2cExtHandler, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT,(uint8_t*)&Value, 1);
 }
+
+
 
 /**
   * @brief  Camera reads single data.
-  * @param  DeviceAddr: I2C address
-  * @param  Reg: Register address
+  * @param  Addr: I2C address
+  * @param  Reg: Register address 
   * @retval Read data
   */
-uint8_t CAMERA_IO_Read(uint16_t DeviceAddr, uint16_t Reg)
+uint8_t CAMERA_IO_Read(uint8_t Addr, uint8_t Reg)
 {
   uint8_t read_value = 0;
-  I2Cx_ReadMultiple(&hI2cExtHandler, DeviceAddr, Reg, I2C_MEMADD_SIZE_16BIT, (uint8_t*)&read_value, 1);
+
+  I2Cx_ReadMultiple(&hI2cExtHandler, Addr, Reg, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&read_value, 1);
+
   return read_value;
 }
 
-#else
-void CAMERA_IO_Write(uint16_t DeviceAddr, uint16_t Reg, uint8_t Value)
-{
-	uint8_t data_write[3];
-	uint8_t status = 0;
+//================0v5640==============
 
-	data_write[0] = (Reg >> 8) & 0xFF;
-	data_write[1] = Reg & 0xFF;
-	data_write[2] = Value & 0xFF;
-	status = HAL_I2C_Master_Transmit(&hI2cExtHandler, DeviceAddr, data_write, 3, 100);
-	  /* Check the communication status */
-	  if(status != HAL_OK)
-	  {
-	    /* I2C error occurred */
-	    I2Cx_Error(&hI2cExtHandler, DeviceAddr);
-	  }
+void CAMERA_IO_Write_OV5640(uint16_t Addr, uint16_t Reg, uint8_t value)
+{
+  I2Cx_WriteMultiple(&hI2cExtHandler, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_16BIT,(uint8_t*)&value, 1);
 }
 
-uint8_t CAMERA_IO_Read(uint16_t DeviceAddr, uint16_t Reg)
+uint8_t CAMERA_IO_Read_OV5640(uint16_t Addr, uint16_t Reg)
 {
-	uint8_t status = 0;
-	uint8_t data_write[2];
-	uint8_t data_read[1];
-
-	data_write[0] = (Reg >> 8) & 0xFF;
-	data_write[1] = Reg & 0xFF;
-	status = HAL_I2C_Master_Transmit(&hI2cExtHandler, DeviceAddr, data_write, 2, 100);
-	status|= HAL_I2C_Master_Receive (&hI2cExtHandler, DeviceAddr, data_read,  1, 100);
-	  /* Check the communication status */
-	  if(status != HAL_OK)
-	  {
-	    /* I2C error occurred */
-	    I2Cx_Error(&hI2cExtHandler, DeviceAddr);
-	  }
-	return data_read[0];
+  uint8_t read_value = 0;
+  I2Cx_ReadMultiple(&hI2cExtHandler, Addr, Reg, I2C_MEMADD_SIZE_16BIT, (uint8_t*)&read_value, 1);
+  return read_value;
 }
-#endif
+//================0v5640==============
 
 /**
   * @brief  Camera delay 

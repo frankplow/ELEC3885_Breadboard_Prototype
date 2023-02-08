@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    stm32746g_discovery_camera.c + Heavily modified by Sol
+  * @file    stm32746g_discovery_camera.c
   * @author  MCD Application Team
   * @brief   This file includes the driver for Camera modules mounted on
   *          STM32746G-Discovery board.
@@ -54,9 +54,12 @@
 EndDependencies */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32746g_discovery_ov5640.h"
+#include <stm32746g_multi_camera_driver.h>
 #include "stm32746g_discovery.h"
 #include "stdio.h"
+
+//Define camera module: OV9655, OV2640, OV5640
+#define OV2640
 
 /** @addtogroup BSP
   * @{
@@ -131,8 +134,150 @@ static uint32_t GetSize(uint32_t resolution);
   *         naming QQVGA, QVGA, VGA ...
   * @retval Camera status
   */
+#ifdef OV2640
 uint8_t BSP_CAMERA_Init(uint32_t Resolution)
 { 
+  DCMI_HandleTypeDef *phdcmi;
+  uint8_t status = CAMERA_ERROR;
+
+  /* Get the DCMI handle structure */
+  phdcmi = &hDcmiHandler;
+
+  /*** Configures the DCMI to interface with the camera module ***/
+  /* DCMI configuration */
+  phdcmi->Init.CaptureRate      = DCMI_CR_ALL_FRAME;
+  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_LOW;
+  phdcmi->Init.SynchroMode      = DCMI_SYNCHRO_HARDWARE;
+  phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_LOW; //low for 02640
+  phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
+  phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
+  phdcmi->Instance              = DCMI;
+
+  status = CAMERA_ERROR;
+
+  /* Power up camera */
+  BSP_CAMERA_PwrUp();
+  printf("\n ov2640 Init\n");
+
+  /* Read ID of Camera module via I2C */
+  if(ov2640_ReadID(CAMERA_I2C_ADDRESS) == OV2640_ID)
+  {
+	printf("\nOV2640 device ID read\n");
+    /* Initialize the camera driver structure */
+    camera_drv = &ov2640_drv;
+    CameraHwAddress = CAMERA_I2C_ADDRESS;
+
+    /* DCMI Initialization */
+    BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
+    HAL_DCMI_Init(phdcmi);
+
+    /* Camera Module Initialization via I2C to the wanted 'Resolution' */
+    if (Resolution == CAMERA_R480x272)
+    {     /* For 480x272 resolution, the OV9655 sensor is set to VGA resolution
+           * as OV9655 doesn't supports 480x272 resolution,
+           * then DCMI is configured to output a 480x272 cropped window */
+      camera_drv->Init(CameraHwAddress, CAMERA_R640x480);
+      HAL_DCMI_ConfigCROP(phdcmi,           /* Crop in the middle of the VGA picture */
+                         (CAMERA_VGA_RES_X - CAMERA_480x272_RES_X)/2,
+                         (CAMERA_VGA_RES_Y - CAMERA_480x272_RES_Y)/2,
+                         (CAMERA_480x272_RES_X * 2) - 1,
+                          CAMERA_480x272_RES_Y - 1);
+      HAL_DCMI_EnableCROP(phdcmi);
+    }
+    else
+    {
+      camera_drv->Init(CameraHwAddress, Resolution);
+      HAL_DCMI_DisableCROP(phdcmi);
+    }
+
+    CameraCurrentResolution = Resolution;
+
+    /* Return CAMERA_OK status */
+    status = CAMERA_OK;
+  }
+  else
+  {
+    /* Return CAMERA_NOT_SUPPORTED status */
+    status = CAMERA_NOT_SUPPORTED;
+    printf("\nOV2640 device ID read FAILED\n");
+  }
+
+  return status;
+}
+#endif
+
+#ifdef OV9655
+uint8_t BSP_CAMERA_Init(uint32_t Resolution)
+{
+  DCMI_HandleTypeDef *phdcmi;
+  uint8_t status = CAMERA_ERROR;
+
+  /* Get the DCMI handle structure */
+  phdcmi = &hDcmiHandler;
+
+  /*** Configures the DCMI to interface with the camera module ***/
+  /* DCMI configuration */
+  phdcmi->Init.CaptureRate      = DCMI_CR_ALL_FRAME;
+  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_LOW;
+  phdcmi->Init.SynchroMode      = DCMI_SYNCHRO_HARDWARE;
+  phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_HIGH;
+  phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
+  phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
+  phdcmi->Instance              = DCMI;
+
+  status = CAMERA_ERROR;
+
+  /* Power up camera */
+  BSP_CAMERA_PwrUp();
+
+  /* Read ID of Camera module via I2C */
+  if(ov9655_ReadID(CAMERA_I2C_ADDRESS) == OV9655_ID)
+  {
+    /* Initialize the camera driver structure */
+    camera_drv = &ov9655_drv;
+    CameraHwAddress = CAMERA_I2C_ADDRESS;
+
+    /* DCMI Initialization */
+    BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
+    HAL_DCMI_Init(phdcmi);
+
+    /* Camera Module Initialization via I2C to the wanted 'Resolution' */
+    if (Resolution == CAMERA_R480x272)
+    {     /* For 480x272 resolution, the OV9655 sensor is set to VGA resolution
+           * as OV9655 doesn't supports 480x272 resolution,
+           * then DCMI is configured to output a 480x272 cropped window */
+      camera_drv->Init(CameraHwAddress, CAMERA_R640x480);
+      HAL_DCMI_ConfigCROP(phdcmi,           /* Crop in the middle of the VGA picture */
+                         (CAMERA_VGA_RES_X - CAMERA_480x272_RES_X)/2,
+                         (CAMERA_VGA_RES_Y - CAMERA_480x272_RES_Y)/2,
+                         (CAMERA_480x272_RES_X * 2) - 1,
+                          CAMERA_480x272_RES_Y - 1);
+      HAL_DCMI_EnableCROP(phdcmi);
+    }
+    else
+    {
+      camera_drv->Init(CameraHwAddress, Resolution);
+      HAL_DCMI_DisableCROP(phdcmi);
+    }
+
+    CameraCurrentResolution = Resolution;
+
+    /* Return CAMERA_OK status */
+    status = CAMERA_OK;
+  }
+  else
+  {
+    /* Return CAMERA_NOT_SUPPORTED status */
+    status = CAMERA_NOT_SUPPORTED;
+  }
+
+  return status;
+}
+#endif
+
+#ifdef OV5640
+uint8_t BSP_CAMERA_Init(uint32_t Resolution)
+{
   DCMI_HandleTypeDef *phdcmi;
   uint8_t status = CAMERA_ERROR;
 
@@ -153,51 +298,31 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
 
 
 	BSP_CAMERA_PwrDown();
-	//hal_status = BSP_SDRAM_Init();
-	//OnError_Handler(hal_status != HAL_OK);
-
-	BSP_CAMERA_PwrUp();
+    BSP_CAMERA_PwrUp();
 	HAL_Delay(1000);
-  /* Power up camera */
-  //BSP_CAMERA_PwrUp();
   printf("\nCamera power Up\n");
   /* Read ID of Camera module via I2C */
-  if(ov5640_ReadID(CAMERA_I2C_ADDRESS) == OV5640_ID)
+  if(ov5640_ReadID(CAMERA_I2C_ADDRESS_OV5640) == OV5640_ID)
   {
 	printf("\nread ID correct\n");
     /* Initialize the camera driver structure */
     camera_drv = &ov5640_drv;
-    CameraHwAddress = CAMERA_I2C_ADDRESS;
+    CameraHwAddress = CAMERA_I2C_ADDRESS_OV5640;
 
     /* DCMI Initialization */
     BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
     HAL_DCMI_Init(phdcmi);
 
-    /* Camera Module Initialization via I2C to the wanted 'Resolution' */
-//    if (Resolution == CAMERA_R480x272)
-//    {     /* For 480x272 resolution, the OV9655 sensor is set to VGA resolution
-//           * as OV9655 doesn't supports 480x272 resolution,
-//           * then DCMI is configured to output a 480x272 cropped window */
-//      camera_drv->Init(CameraHwAddress, CAMERA_R640x480);
-//      HAL_DCMI_ConfigCROP(phdcmi,           /* Crop in the middle of the VGA picture */
-//                         (CAMERA_VGA_RES_X - CAMERA_480x272_RES_X)/2,
-//                         (CAMERA_VGA_RES_Y - CAMERA_480x272_RES_Y)/2,
-//                         (CAMERA_480x272_RES_X * 2) - 1,
-//                          CAMERA_480x272_RES_Y - 1);
-//      HAL_DCMI_EnableCROP(phdcmi);
-//    }
- //   else
-//    {
+
       camera_drv->Init(CameraHwAddress, Resolution);
       HAL_DCMI_DisableCROP(phdcmi);
-//    }
+
 
     CameraCurrentResolution = Resolution;
 
-    /* Return CAMERA_OK status */
     /*USER ADD CONFIG ====== */
-    OV5640_SetLightMode(CAMERA_I2C_ADDRESS, OV5640_LIGHT_AUTO);
-    OV5640_MirrorFlipConfig(CAMERA_I2C_ADDRESS, OV5640_FLIP);
+    OV5640_SetLightMode(CAMERA_I2C_ADDRESS_OV5640, OV5640_LIGHT_AUTO);
+    OV5640_MirrorFlipConfig(CAMERA_I2C_ADDRESS_OV5640, OV5640_FLIP);
     /*USER ADD CONFIG ====== */
     status = CAMERA_OK;
   }
@@ -210,6 +335,8 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
 
   return status;
 }
+#endif
+
 
 /**
   * @brief  DeInitializes the camera.
@@ -289,9 +416,6 @@ uint8_t BSP_CAMERA_Stop(void)
   * @brief  CANERA power up
   * @retval None
   */
-
-
-
 void BSP_CAMERA_PwrUp(void)
 {
   GPIO_InitTypeDef gpio_init_structure;
@@ -334,9 +458,8 @@ void BSP_CAMERA_PwrDown(void)
 
   /* Assert the camera POWER_DOWN pin (active high) */
   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_13, GPIO_PIN_SET);
+
 }
-
-
 
 /**
   * @brief  Configures the camera contrast and brightness.
@@ -612,7 +735,6 @@ __weak void BSP_CAMERA_VsyncEventCallback(void)
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
   BSP_CAMERA_FrameEventCallback();
-  //printf("/nFRAME EVENT/n");
 }
 
 /**

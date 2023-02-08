@@ -205,8 +205,8 @@ typedef enum
 /* Exported constant IO ------------------------------------------------------*/
 
 #define LCD_I2C_ADDRESS                  ((uint16_t)0x70)
-// change OV5640 I2C_ADDRESS to 0x78
-#define CAMERA_I2C_ADDRESS               ((uint16_t)0x78)
+#define CAMERA_I2C_ADDRESS               ((uint16_t)0x60)
+#define CAMERA_I2C_ADDRESS_OV5640               ((uint16_t)0x78)
 #define AUDIO_I2C_ADDRESS                ((uint16_t)0x34)
 #define EEPROM_I2C_ADDRESS_A01           ((uint16_t)0xA0)
 #define EEPROM_I2C_ADDRESS_A02           ((uint16_t)0xA6)

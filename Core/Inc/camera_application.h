@@ -11,7 +11,7 @@
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
 //#include "stm32746g_discovery_sdram.h"
-#include "stm32746g_discovery_ov5640.h"
+#include "stm32746g_multi_camera_driver.h"
 #include "stm32746g_discovery_lcd.h"
 #include "stdio.h"
 #include "stdlib.h"
