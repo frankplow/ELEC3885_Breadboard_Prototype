@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -167,8 +169,8 @@ void Error_Handler(void);
 #define LCD_B3_GPIO_Port GPIOJ
 #define OTG_FS_OverCurrent_Pin GPIO_PIN_4
 #define OTG_FS_OverCurrent_GPIO_Port GPIOD
-#define SDMMC_D0_Pin GPIO_PIN_2
-#define SDMMC_D0_GPIO_Port GPIOD
+#define SDMMC_CMD_Pin GPIO_PIN_2
+#define SDMMC_CMD_GPIO_Port GPIOD
 #define TP3_Pin GPIO_PIN_15
 #define TP3_GPIO_Port GPIOH
 #define ARDUINO_SCK_D13_Pin GPIO_PIN_1
@@ -383,6 +385,7 @@ void Error_Handler(void);
 #define ARDUINO_MOSI_PWM_D11_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define CAMERA_FRAME_BUFFER               0xC0260000
 
 /* USER CODE END Private defines */
 
