@@ -12,23 +12,20 @@ DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
 uint8_t status = CAMERA_OK;
 
-uint8_t *cam_fb;
-uint32_t cam_fb_size;
-
 
 void LCD_init(void) {
 
 	BSP_LCD_Init();
 	uint32_t  *ptrLcd;
 	/* Init LCD screen buffer */
-	ptrLcd = (uint32_t*)(LCD_FRAME_BUFFER);
+	ptrLcd = (uint32_t*)(lcd_fb);
 	for (int i=0; i<(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()); i++)
 	{
 	ptrLcd[i]=0;
 	}
 
-	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
-	//BSP_LCD_LayerRgb565Init(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
+	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, lcd_fb);
+	//BSP_LCD_LayerRgb565Init(LTDC_ACTIVE_LAYER, lcd_fb);
 
 	/* Set LCD Foreground Layer  */
 	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
@@ -40,14 +37,14 @@ void initialiseCapture(void) {
     //cam_fb_size = 480*272*2;			// Resolution * color depth; RGB565=16bit=2byte
     //cam_fb = (uint8_t *) malloc(cam_fb_size);
 
-    memset(CAMERA_FRAME_BUFFER, 255, cam_fb_size);
+    memset(cam_fb, 255, CAM_FB_SIZE);
 
 	BSP_CAMERA_Init(CAMERA_R480x272);
-	BSP_CAMERA_ContinuousStart((uint8_t *)CAMERA_FRAME_BUFFER);
+	BSP_CAMERA_ContinuousStart(cam_fb);
 }
 
 BSP_CAMERA_VsyncEventCallback(void) {
-	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(CAMERA_FRAME_BUFFER), (uint32_t *)(LCD_FRAME_BUFFER));
+	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
 	//frameCounter++;
 }
 
@@ -61,7 +58,7 @@ BSP_CAMERA_VsyncEventCallback(void) {
 //}
 
 void BSP_CAMERA_FrameEventCallback(void) {
-	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(CAMERA_FRAME_BUFFER), (uint32_t *)(LCD_FRAME_BUFFER));
+	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
 	//printf("\nFrame Event Callback\n");
 }
 
@@ -70,7 +67,7 @@ void BSP_CAMERA_FrameEventCallback(void) {
 //  static uint32_t tmp, tmp2, counter;
 //  if(272 > counter)
 //  {
-//    LCD_LL_ConvertLineToARGB8888((uint32_t *)(CAMERA_FRAME_BUFFER + tmp), (uint32_t *)(LCD_FRAME_BUFFER + tmp2));
+//    LCD_LL_ConvertLineToARGB8888((uint32_t *)(cam_fb + tmp), (uint32_t *)(lcd_fb + tmp2));
 //    tmp  = tmp + 480*sizeof(uint16_t);
 //    tmp2 = tmp2 + (480) * sizeof(uint32_t);
 //    counter++;
@@ -78,7 +75,7 @@ void BSP_CAMERA_FrameEventCallback(void) {
 //  else
 //  {
 //	//FRAME Event//
-//	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(CAMERA_FRAME_BUFFER), (uint32_t *)(LCD_FRAME_BUFFER));
+//	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
 //    tmp = 0;
 //    tmp2 = 0;
 //    counter = 0;
