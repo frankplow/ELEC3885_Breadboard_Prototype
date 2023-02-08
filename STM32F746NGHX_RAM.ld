@@ -44,7 +44,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 320K
+  DTCM     (rw)   : ORIGIN = 0x20000000,   LENGTH = 64K
+  RAM    (xrw)    : ORIGIN = 0x20010000,   LENGTH = 256K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
 }
 
@@ -145,6 +146,18 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM
+
+  /* .dtcm region for tightly-coupled data memory. Data will only be placed in here explicitly */
+  .dtcm : 
+  {
+    . = ALIGN(4);
+    _sdtcm = .;        /* create a global symbol at data start */
+    *(.dtcm)           /* .data sections */
+    *(.dtcm*)          /* .data* sections */
+
+    . = ALIGN(4);
+    _edtcm = .;        /* define a global symbol at data end */
+  } >DTCM AT> RAM
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
