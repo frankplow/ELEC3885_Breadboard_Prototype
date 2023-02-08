@@ -12,6 +12,7 @@ DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
 uint8_t status = CAMERA_OK;
 
+<<<<<<< Upstream, based on main
 
 void LCD_init(void) {
 
@@ -76,12 +77,7 @@ void BSP_CAMERA_FrameEventCallback(void) {
 //  {
 //	//FRAME Event//
 //	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
-//    tmp = 0;
-//    tmp2 = 0;
-//    counter = 0;
-//
-//  }
-//}
+
 
 void LCD_DMA_Transfer_RGBTOARGB8888(void *pSrc, void *pDst) {
 	  /* Enable DMA2D clock */
