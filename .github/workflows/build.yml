@@ -1,0 +1,24 @@
+name: build
+
+run-name: ${{ github.workflow }} — ${{ github.sha }}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v3
+
+      - name: Build
+        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+        with:
+          project-path: ${{ github.workspace }}
+          project-target: ELEC3885_Breadboard_Prototype
