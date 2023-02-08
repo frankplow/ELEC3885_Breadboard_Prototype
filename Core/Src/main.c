@@ -25,7 +25,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <mutff.h>
 
+#include "mutff_fatfs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -139,7 +141,7 @@ static void MX_ADC3_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
-
+void mutff_init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -219,6 +221,7 @@ int main(void)
 //  BSP_CAMERA_ContinuousStart((uint8_t *)CAMERA_FRAME_BUFFER);
   LCD_init();
   initialiseCapture();
+  mutff_init();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -1659,7 +1662,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void mutff_init() {
+	mutff_set_read_fn(mutff_read_fatfs);
+	mutff_set_write_fn(mutff_write_fatfs);
+	mutff_set_tell_fn(mutff_tell_fatfs);
+	mutff_set_seek_fn(mutff_seek_fatfs);
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
