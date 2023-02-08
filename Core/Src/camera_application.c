@@ -11,8 +11,11 @@
 DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
 uint8_t status = CAMERA_OK;
+uint8_t frameCounter;
 
-<<<<<<< Upstream, based on main
+uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+
 
 void LCD_init(void) {
 
@@ -24,7 +27,6 @@ void LCD_init(void) {
 	{
 	ptrLcd[i]=0;
 	}
-
 	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, lcd_fb);
 	//BSP_LCD_LayerRgb565Init(LTDC_ACTIVE_LAYER, lcd_fb);
 
@@ -32,7 +34,6 @@ void LCD_init(void) {
 	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
 		  printf("done screen\n");
 }
-
 
 void initialiseCapture(void) {
     //cam_fb_size = 480*272*2;			// Resolution * color depth; RGB565=16bit=2byte
@@ -46,22 +47,21 @@ void initialiseCapture(void) {
 
 BSP_CAMERA_VsyncEventCallback(void) {
 	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
-	//frameCounter++;
+	frameCounter++;
 }
 
 
-//FPSCalculate(void)  {
-////	float frameRate;
-////	frameRate = (float)frameCounter / 60.0;
-//	printf("\n%i FPS\n", frameCounter);
-//	frameCounter = 0;
-//	printf("\n%i FPS\n", frameCounter);
+void FPSCalculate(void) {
+printf("\n%i FPS\n", frameCounter);
+	frameCounter = 0;
+}
+
+//void BSP_CAMERA_FrameEventCallback(void) {
+//	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
+//	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
+//	//printf("\nFrame Event Callback\n");
+//	frameCounter++;
 //}
-
-void BSP_CAMERA_FrameEventCallback(void) {
-	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
-	//printf("\nFrame Event Callback\n");
-}
 
 //void BSP_CAMERA_LineEventCallback(void)
 //{
@@ -161,5 +161,5 @@ void LCD_LL_ConvertLineToARGB8888(void *pSrc, void *pDst)
 
 
 void BSP_CAMERA_ErrorCallback(void) {
-	printf("\nDCMI ERROR\n");
+	//printf("\nDCMI ERROR\n");
 }

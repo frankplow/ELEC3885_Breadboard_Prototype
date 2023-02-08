@@ -612,7 +612,7 @@ __weak void BSP_CAMERA_VsyncEventCallback(void)
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
   BSP_CAMERA_FrameEventCallback();
-  printf("/nFRAME EVENT/n");
+  //printf("/nFRAME EVENT/n");
 }
 
 /**
