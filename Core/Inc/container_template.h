@@ -50,9 +50,174 @@
 // project includes
 
 
-#define FRAME_RATE 13
+#define FRAME_RATE 1
 #define WIDTH 480
 #define HEIGHT 270
+#define DURATION 2
+#define BIT_DEPTH 16
+#define SAMPLE_SIZE (WIDTH * HEIGHT * BIT_DEPTH / 8)
+#define DATA_SIZE (SAMPLE_SIZE * DURATION)
+
+const MuTFFSampleDescription sample_desc_template = {
+		MuTFF_FOURCC('r', 'a', 'w', ' '),  // Data format
+		1,                                 // Data reference index
+		70,                                // Additional data size
+		{                                  // Additional data
+				0x00, 0x00,                // Version
+				0x00, 0x00,                // Revision level
+				0x00, 0x00, 0x00, 0x00,    // Vendor
+				0x00, 0x00, 0x00, 0x00,    // Temporal quality
+				0x00, 0x00, 0x00, 0x00,    // Spatial quality
+				0x01, 0xe0,                // Width
+				0x01, 0x0e,                // Height
+				0x00, 0x48, 0x00, 0x00,    // Horizontal resolution
+				0x00, 0x48, 0x00, 0x00,    // Vertical resolution
+				0x00, 0x00, 0x00, 0x00,    // Data size
+				0x00, 0x01,                // Frame count
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x10,                // Depth
+				0xFF, 0xFF                 // Color table ID
+
+		}
+};
+
+const MuTFFSampleDescriptionAtom stsd_template = {
+		0,  // Version
+		0,  // Flags
+		1,  // Number of entries
+		{   // Entries
+				sample_desc_template
+		}
+};
+
+const MuTFFTimeToSampleAtom stts_template = {
+		0,                         // Version
+		0,                         // Flags
+		1,                         // Number of entries
+		{                          // Entries
+				{
+						DURATION,  // Sample count
+						1          // Sample duration
+				}
+		}
+};
+
+const MuTFFSampleToChunkAtom stsc_template = {
+		0,  // Version
+		0,  // Flags
+		1,  // Number of entries
+		{
+				{
+						1,         // First chunk
+						DURATION,  // Samples per chunk
+						1          // Sample description ID
+				}
+		}
+};
+
+const MuTFFSampleSizeAtom stsz_template = {
+		0,            // Version
+		0,            // Flags,
+		SAMPLE_SIZE,  // Sample size
+		1,            // Number of entries
+		{}            // Entries
+};
+
+const MuTFFChunkOffsetAtom stco_template = {
+		0,  // Version
+		0,  // Flags
+		1,  // Number of entries
+		{   // Entries
+				0
+		}
+};
+
+const MuTFFSampleTableAtom stbl_template = {
+		stsd_template,  // stsd
+		stts_template,  // stts
+		false,          // ctts present
+		{},             // ctts
+		false,          // cslg present
+		{},             // cslg
+		false,          // stss present
+		{},             // stss
+		false,          // stps present
+		{},             // stps
+		true,           // stsc present
+		stsc_template,  // stsc
+		true,           // stsz present
+		stsz_template,  // stsz
+		true,           // stco present
+		stco_template,  // stco
+		false,          // sdtp present
+		{}              // sdtp
+};
+
+const MuTFFDataReference data_ref_template = {
+		MuTFF_FOURCC('u', 'r', 'l', ' '),  // Type
+		0,                                 // Version
+		1,                                 // Flags
+		0,                                 // Data size
+		{}                                 // Data
+};
+
+const MuTFFDataReferenceAtom dref_template = {
+		0,  // Version
+		0,  // Flags
+		1,  // Number of entries
+		{   // Data references
+				data_ref_template
+		}
+};
+
+const MuTFFDataInformationAtom dinf_template = {
+		dref_template,
+};
+
+const MuTFFHandlerReferenceAtom minf_hdlr_template = {
+		0,                                 // Version
+		0,                                 // Flags
+		MuTFF_FOURCC('m', 'h', 'l', 'r'),  // Component type
+		MuTFF_FOURCC('v', 'i', 'd', 'e'),  // Component subtype
+		0,                                 // Component manufacturer
+		0,                                 // Component flags
+		0,                                 // Component flags mask
+		""                                 // Component name
+};
+
+const MuTFFVideoMediaInformationHeaderAtom vmhd_template = {
+		0,          // Version
+		1,          // Flags
+		0,          // Graphics mode
+		{
+				0,  // opcolor[0]
+				0,  // opcolor[1]
+				0   // opcolor[2]
+		}
+};
+
+const MuTFFVideoMediaInformationAtom minf_template = {
+		vmhd_template,       // vmhd
+		minf_hdlr_template,  // hdlr
+		true,                // dinf present
+		dinf_template,       // dinf
+		true,                // stbl present
+		stbl_template        // stbl
+};
+
+const MuTFFHandlerReferenceAtom mdia_hdlr_template = {
+		0,                                 // Version
+		0,                                 // Flags
+		MuTFF_FOURCC('m', 'h', 'l', 'r'),  // Component type
+		MuTFF_FOURCC('v', 'i', 'd', 'e'),  // Component subtype
+		0,                                 // Component manufacturer
+		0,                                 // Component flags
+		0,                                 // Component flags mask
+		""                                 // Component name
+};
 
 const MuTFFMediaHeaderAtom mdhd_template = {
 		0,           // Version
@@ -60,22 +225,22 @@ const MuTFFMediaHeaderAtom mdhd_template = {
 		0,           // Creation time
 		0,           // Modification time
 		FRAME_RATE,  // Time scale
-		0,           // Duration
+		DURATION,    // Duration
 		0,		     // Language
 		0,           // Quality
 };
 
 const MuTFFMediaAtom mdia_template = {
-		mdhd_template,  // mdhd
-		false,          // elng present
+		mdhd_template,       // mdhd
+		false,               // elng present
 		{},
-		false,          // hdlr present
+		true,                // hdlr present
+		mdia_hdlr_template,
+		true,                // minf present
+		minf_template,
 		{},
-		false,          // minf present
 		{},
-		{},
-		{},
-		false,          // udta present
+		false,               // udta present
 		{}
 };
 
@@ -85,7 +250,7 @@ const MuTFFTrackHeaderAtom tkhd_template = {
 		0,        									// Creation time
 		0,        									// Modification time
 		0,        									// Track ID
-		0,        									// Duration
+		DURATION,        							// Duration
 		0,        									// Layer
 		0,  	  									// Alternate group
 		{1, 0},   									// Volume
@@ -127,7 +292,7 @@ const MuTFFMovieHeaderAtom mvhd_template = {
 		0,	         								// Creation time
 		0, 	         								// Modification time
 		FRAME_RATE,  								// Frames per second
-		0,           								// Duration
+		DURATION,           						// Duration
 		{1, 0},      								// Preferred rate
 		{1, 0},      								// Preferred volume
 		{            								// Matrix structure
@@ -160,11 +325,10 @@ const MuTFFMovieAtom moov_template = {
 
 const MuTFFFileTypeAtom ftyp_template = {
 		MuTFF_FOURCC('q', 't', ' ', ' '),          // Major brand
-		0x20160900,                                // Minor version
-		2,                                         // Compatible brands count
+		MuTFF_FOURCC(20, 16, 9, 0),                // Minor version
+		1,                                         // Compatible brands count
 		{								           // Compatible brands
 				MuTFF_FOURCC('q', 't', ' ', ' '),  // Compatible brands[0]
-				MuTFF_FOURCC('m', 'p', '4', '1')   // Compatible brands[1]
 		}
 };
 
@@ -172,8 +336,13 @@ const MuTFFMovieFile file_template = {
 		true,           // ftyp present
 		ftyp_template,  // ftyp
 		moov_template,  // moov
-		0,              // mdat count
-		{},             // mdat
+		1,              // mdat count
+		{               // mdat
+				{
+						DATA_SIZE,
+						0
+				}
+		},
 		0,              // free count
 		{},             // free
 		0,              // skip count
