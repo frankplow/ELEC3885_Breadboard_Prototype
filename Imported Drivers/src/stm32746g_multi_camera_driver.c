@@ -8,7 +8,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2016 STMicroelectronics + Sol
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -59,7 +59,7 @@ EndDependencies */
 #include "stdio.h"
 
 //Define camera module: OV9655, OV2640, OV5640
-#define OV2640
+#define OV5640
 
 /** @addtogroup BSP
   * @{

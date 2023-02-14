@@ -17,8 +17,10 @@
 #include "stdlib.h"
 #include "string.h"
 
-#define CAM_FB_SIZE 259200
-#define LCD_FB_SIZE CAM_FB_SIZE
+#define X_RES 480
+#define Y_RES 272
+#define CAM_FB_SIZE X_RES * Y_RES * 2
+#define LCD_FB_SIZE 259200
 
 extern uint8_t frameCounter;
 void initialiseCapture(void);
