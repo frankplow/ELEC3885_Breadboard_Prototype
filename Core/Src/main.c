@@ -310,6 +310,7 @@ if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
 	movie_file.movie.track[0].media.media_header.duration = content_duration;
 	movie_file.movie.track[0].media.video_media_information.sample_table.sample_to_chunk.sample_to_chunk_table[0].samples_per_chunk = content_duration;
 	movie_file.movie.track[0].media.video_media_information.sample_table.time_to_sample.time_to_sample_table[0].sample_count = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.sample_size.number_of_entries = content_duration;
 
 	f_rewind(&SDFile);
 

@@ -51,8 +51,8 @@
 
 
 #define FRAME_RATE 15
-#define WIDTH 320
-#define HEIGHT 240
+#define WIDTH 480
+#define HEIGHT 272
 #define DURATION 0
 #define BIT_DEPTH 16
 #define SAMPLE_SIZE (WIDTH * HEIGHT * BIT_DEPTH / 8)
@@ -122,7 +122,7 @@ const MuTFFSampleSizeAtom stsz_template = {
 		0,            // Version
 		0,            // Flags,
 		SAMPLE_SIZE,  // Sample size
-		1,            // Number of entries
+		DURATION,     // Number of entries
 		{}            // Entries
 };
 
