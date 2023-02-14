@@ -11,9 +11,15 @@
 DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
 uint8_t status = CAMERA_OK;
+uint8_t frameCounter;
 
+uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+//uint8_t cam_fb_size, lcb_fb_size;
 
 void LCD_init(void) {
+
+
 
 	BSP_LCD_Init();
 	uint32_t  *ptrLcd;
@@ -23,7 +29,6 @@ void LCD_init(void) {
 	{
 	ptrLcd[i]=0;
 	}
-
 	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, lcd_fb);
 	//BSP_LCD_LayerRgb565Init(LTDC_ACTIVE_LAYER, lcd_fb);
 
@@ -32,34 +37,35 @@ void LCD_init(void) {
 		  printf("done screen\n");
 }
 
-
 void initialiseCapture(void) {
     //cam_fb_size = 480*272*2;			// Resolution * color depth; RGB565=16bit=2byte
     //cam_fb = (uint8_t *) malloc(cam_fb_size);
 
+
     memset(cam_fb, 255, CAM_FB_SIZE);
 
 	BSP_CAMERA_Init(CAMERA_R480x272);
+    //BSP_CAMERA_Init(CAMERA_R640x480);
+	//BSP_CAMERA_Init(CAMERA_R320x240);
 	BSP_CAMERA_ContinuousStart(cam_fb);
 }
 
-BSP_CAMERA_VsyncEventCallback(void) {
-	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
-	//frameCounter++;
-}
-
-
-//FPSCalculate(void)  {
-////	float frameRate;
-////	frameRate = (float)frameCounter / 60.0;
-//	printf("\n%i FPS\n", frameCounter);
-//	frameCounter = 0;
-//	printf("\n%i FPS\n", frameCounter);
+//BSP_CAMERA_VsyncEventCallback(void) {
+//	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
+//	frameCounter++;
 //}
+
+
+void FPSCalculate(void) {
+printf("\n%i FPS\n", frameCounter);
+	frameCounter = 0;
+}
 
 void BSP_CAMERA_FrameEventCallback(void) {
 	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
+	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
 	//printf("\nFrame Event Callback\n");
+	frameCounter++;
 }
 
 //void BSP_CAMERA_LineEventCallback(void)
@@ -76,12 +82,7 @@ void BSP_CAMERA_FrameEventCallback(void) {
 //  {
 //	//FRAME Event//
 //	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
-//    tmp = 0;
-//    tmp2 = 0;
-//    counter = 0;
-//
-//  }
-//}
+
 
 void LCD_DMA_Transfer_RGBTOARGB8888(void *pSrc, void *pDst) {
 	  /* Enable DMA2D clock */
@@ -107,7 +108,7 @@ void LCD_DMA_Transfer_RGBTOARGB8888(void *pSrc, void *pDst) {
 
 	    if(HAL_DMA2D_ConfigLayer(&hdma2d_eval, 1) == HAL_OK)
 	    {
-	      if (HAL_DMA2D_Start(&hdma2d_eval, (uint32_t)pSrc, (uint32_t)pDst, 480, 272) == HAL_OK)
+	      if (HAL_DMA2D_Start(&hdma2d_eval, (uint32_t)pSrc, (uint32_t)pDst, X_RES, Y_RES) == HAL_OK)
 	      {
 	        /* Polling For DMA transfer */
 	        HAL_DMA2D_PollForTransfer(&hdma2d_eval, 10);
@@ -165,5 +166,5 @@ void LCD_LL_ConvertLineToARGB8888(void *pSrc, void *pDst)
 
 
 void BSP_CAMERA_ErrorCallback(void) {
-	printf("\nDCMI ERROR\n");
+	//printf("\nDCMI ERROR\n");
 }

@@ -176,8 +176,8 @@ void     OV5640_MirrorFlipConfig(uint16_t DeviceAddr, uint8_t Config);
 void     OV5640_ZoomConfig(uint16_t DeviceAddr, uint8_t Zoom);
 int32_t  OV5640_GetResolution(uint16_t DeviceAddr);
 void     CAMERA_IO_Init(void);
-void     CAMERA_IO_Write(uint8_t addr, uint16_t reg, uint16_t value);
-uint16_t CAMERA_IO_Read(uint8_t Addr, uint16_t Reg);
+void     CAMERA_IO_Write_OV5640(uint8_t addr, uint16_t reg, uint16_t value);
+uint16_t CAMERA_IO_Read_OV5640(uint8_t Addr, uint16_t Reg);
 void     CAMERA_Delay(uint32_t delay);
 
 /* CAMERA driver structure */

@@ -18,8 +18,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32746G_DISCOVERY_OV5640_H
-#define __STM32746G_DISCOVERY_OV5640_H
+#ifndef __STM32746G_DISCOVERY_OV2640_H
+#define __STM32746G_DISCOVERY_OV2640_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -27,6 +27,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 /* Include Camera component Driver */
+#include "ov2640.h"
+#include "ov9655.h"
 #include "ov5640.h"
 #include "stm32746g_discovery.h"
 

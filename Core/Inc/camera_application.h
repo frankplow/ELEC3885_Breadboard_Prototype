@@ -5,24 +5,24 @@
  *      Author: sol
  */
 
-#ifndef INC_CAMERA_APPLICATION_H_
-#define INC_CAMERA_APPLICATION_H_
+#ifndef __CAMERA_APPLICATION_H
+#define __CAMERA_APPLICATION_H
 
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
-#include "stm32746g_discovery_sdram.h"
-#include "stm32746g_discovery_ov5640.h"
+//#include "stm32746g_discovery_sdram.h"
+#include "stm32746g_multi_camera_driver.h"
 #include "stm32746g_discovery_lcd.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 
-#define CAM_FB_SIZE 259200
-uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+#define X_RES 480
+#define Y_RES 272
+#define CAM_FB_SIZE X_RES * Y_RES * 2
+#define LCD_FB_SIZE 259200
 
-#define LCD_FB_SIZE CAM_FB_SIZE
-char lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
-
+extern uint8_t frameCounter;
 void initialiseCapture(void);
 void BSP_CAMERA_LineEventCallback(void);
 void BSP_CAMERA_FrameEventCallback(void);
