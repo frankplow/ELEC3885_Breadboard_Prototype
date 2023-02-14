@@ -467,7 +467,7 @@ void ov5640_Init(uint16_t DeviceAddr, uint32_t resolution)
 
   for(index=0; index< (sizeof(OV5640_Init)/4) ; index++)
   {
-    CAMERA_IO_Write(DeviceAddr, OV5640_Init[index][0], OV5640_Init[index][1]);
+    CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_Init[index][0], OV5640_Init[index][1]);
   }
 
   /* Initialize OV5640 */
@@ -477,7 +477,7 @@ void ov5640_Init(uint16_t DeviceAddr, uint32_t resolution)
     {
       for(index=0; index<(sizeof(OV5640_QQVGA)/4); index++)
       {
-        CAMERA_IO_Write(DeviceAddr, OV5640_QQVGA[index][0], OV5640_QQVGA[index][1]);
+        CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_QQVGA[index][0], OV5640_QQVGA[index][1]);
       }
       break;
     }
@@ -485,7 +485,7 @@ void ov5640_Init(uint16_t DeviceAddr, uint32_t resolution)
     {
       for(index=0; index< (sizeof(OV5640_QVGA)/4); index++)
       {
-        CAMERA_IO_Write(DeviceAddr, OV5640_QVGA[index][0], OV5640_QVGA[index][1]);
+        CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_QVGA[index][0], OV5640_QVGA[index][1]);
       }
 
       break;
@@ -494,7 +494,7 @@ void ov5640_Init(uint16_t DeviceAddr, uint32_t resolution)
     {
       for(index=0; index<(sizeof(OV5640_480x272)/4); index++)
       {
-        CAMERA_IO_Write(DeviceAddr, OV5640_480x272[index][0], OV5640_480x272[index][1]);
+        CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_480x272[index][0], OV5640_480x272[index][1]);
       }
       break;
     }
@@ -502,7 +502,7 @@ void ov5640_Init(uint16_t DeviceAddr, uint32_t resolution)
     {
       for(index=0; index<(sizeof(OV5640_VGA)/4); index++)
       {
-        CAMERA_IO_Write(DeviceAddr, OV5640_VGA[index][0], OV5640_VGA[index][1]);
+        CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_VGA[index][0], OV5640_VGA[index][1]);
       }
       break;
     }
@@ -523,48 +523,48 @@ void OV5640_SetLightMode(uint16_t DeviceAddr, uint8_t LightMode)
 {
   uint32_t index = 0;
 
-  CAMERA_IO_Write(DeviceAddr, 0x3406, 0x00);
-  CAMERA_IO_Write(DeviceAddr, 0x5190, 0x46);
-  CAMERA_IO_Write(DeviceAddr, 0x5191, 0xf8);
-  CAMERA_IO_Write(DeviceAddr, 0x5192, 0x04);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x3406, 0x00);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5190, 0x46);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5191, 0xf8);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5192, 0x04);
 
   switch(LightMode)
   {
   case OV5640_LIGHT_AUTO:
     for(index=0; index< (sizeof(OV5640_LightModeAuto)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeAuto[index][0], OV5640_LightModeAuto[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeAuto[index][0], OV5640_LightModeAuto[index][1]);
     }
     break;
   case OV5640_LIGHT_SUNNY:
     for(index=0; index< (sizeof(OV5640_LightModeSunny)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeSunny[index][0], OV5640_LightModeSunny[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeSunny[index][0], OV5640_LightModeSunny[index][1]);
     }
     break;
   case OV5640_LIGHT_OFFICE:
     for(index=0; index< (sizeof(OV5640_LightModeOffice)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeOffice[index][0], OV5640_LightModeOffice[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeOffice[index][0], OV5640_LightModeOffice[index][1]);
     }
     break;
   case OV5640_LIGHT_CLOUDY:
     for(index=0; index< (sizeof(OV5640_LightModeCloudy)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeCloudy[index][0], OV5640_LightModeCloudy[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeCloudy[index][0], OV5640_LightModeCloudy[index][1]);
     }
     break;
   case OV5640_LIGHT_HOME:
     for(index=0; index< (sizeof(OV5640_LightModeHome)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeHome[index][0], OV5640_LightModeHome[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeHome[index][0], OV5640_LightModeHome[index][1]);
     }
     break;
   default :
     /* Auto light mode used */
     for(index=0; index< (sizeof(OV5640_LightModeAuto)/4) ; index++)
     {
-      CAMERA_IO_Write(DeviceAddr, OV5640_LightModeAuto[index][0], OV5640_LightModeAuto[index][1]);
+      CAMERA_IO_Write_OV5640(DeviceAddr, OV5640_LightModeAuto[index][0], OV5640_LightModeAuto[index][1]);
     }
     break;
   }
@@ -581,76 +581,76 @@ void OV5640_SetEffect(uint16_t DeviceAddr, uint32_t Effect)
   switch(Effect)
   {
   case OV5640_COLOR_EFFECT_NONE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0x7F);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0x7F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x00);
     break;
 
   case OV5640_COLOR_EFFECT_BLUE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0xA0);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0xA0);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x40);
     break;
 
   case OV5640_COLOR_EFFECT_RED:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0xC0);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0xC0);
     break;
 
   case OV5640_COLOR_EFFECT_GREEN:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x60);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x60);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x60);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x60);
     break;
 
   case OV5640_COLOR_EFFECT_BW:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x80);
     break;
 
   case OV5640_COLOR_EFFECT_SEPIA:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0xA0);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0xA0);
     break;
 
   case OV5640_COLOR_EFFECT_NEGATIVE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x40);
     break;
 
   case OV5640_COLOR_EFFECT_BW_NEGATIVE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x58);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x58);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x40);
     break;
 
   case OV5640_COLOR_EFFECT_OVEREXPOSURE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0xF0);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0xF0);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0xF0);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0xF0);
     break;
 
   case OV5640_COLOR_EFFECT_SOLARIZE:
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x06);
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x10);
-    CAMERA_IO_Write(DeviceAddr, 0x5003, 0x09);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5003, 0x09);
     break;
 
   default :
     /* No effect */
-    CAMERA_IO_Write(DeviceAddr, 0x5001, 0x7F);
-    CAMERA_IO_Write(DeviceAddr, 0x5580, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0x7F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x00);
     break;
   }
 }
@@ -666,62 +666,62 @@ void OV5640_SetEffect(uint16_t DeviceAddr, uint32_t Effect)
   */
 void OV5640_SetBrightness(uint16_t DeviceAddr, uint8_t Level)
 {
-  CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
 
   switch(Level)
   {
   case OV5640_BRIGHTNESS_LEVEL4P:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x40);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL3P:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x30);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL2P:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x20);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL1P:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x10);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL0:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x00);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL1N:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x10);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL2N:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x20);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL3N:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x30);
     break;
 
   case OV5640_BRIGHTNESS_LEVEL4N:
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x40);
     break;
 
   default:
     /* Level 0 as default */
     Level = OV5640_BRIGHTNESS_LEVEL0;
-    CAMERA_IO_Write(DeviceAddr, 0x5587, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5587, 0x00);
     break;
   }
 
-  CAMERA_IO_Write(DeviceAddr, 0x5580, 0x04);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x04);
 
   if(Level < OV5640_SATURATION_LEVEL1N)
   {
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x01);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x01);
   }
   else
   {
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x09);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x09);
   }
 }
 
@@ -736,64 +736,64 @@ void OV5640_SetBrightness(uint16_t DeviceAddr, uint8_t Level)
   */
 void OV5640_SetSaturation(uint16_t DeviceAddr, uint8_t Level)
 {
-  CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
 
   switch(Level)
   {
   case OV5640_SATURATION_LEVEL4P:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x40);
     break;
 
   case OV5640_SATURATION_LEVEL3P:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x50);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x50);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x50);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x50);
     break;
 
   case OV5640_SATURATION_LEVEL2P:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x60);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x60);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x60);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x60);
     break;
 
   case OV5640_SATURATION_LEVEL1P:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x70);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x70);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x70);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x70);
     break;
 
   case OV5640_SATURATION_LEVEL0:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x80);
     break;
 
   case OV5640_SATURATION_LEVEL1N:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x30);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x30);
     break;
 
   case OV5640_SATURATION_LEVEL2N:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x20);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x20);
     break;
 
   case OV5640_SATURATION_LEVEL3N:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x10);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x10);
     break;
 
   case OV5640_SATURATION_LEVEL4N:
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x00);
     break;
 
   default:
     /* Level 0 as default */
-    CAMERA_IO_Write(DeviceAddr, 0x5583, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5584, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5583, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5584, 0x40);
     break;
   }
 
-  CAMERA_IO_Write(DeviceAddr, 0x5580, 0x02);
-  CAMERA_IO_Write(DeviceAddr, 0x5588, 0x41);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x02);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x41);
 }
 
 /**
@@ -806,64 +806,64 @@ void OV5640_SetSaturation(uint16_t DeviceAddr, uint8_t Level)
   */
 void OV5640_SetContrast(uint16_t DeviceAddr, uint8_t Level)
 {
-  CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-  CAMERA_IO_Write(DeviceAddr, 0x5580, 0x04);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x04);
 
   switch(Level)
   {
   case OV5640_CONTRAST_LEVEL4P:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x30);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x30);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x30);
     break;
 
   case OV5640_CONTRAST_LEVEL3P:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x2C);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x2C);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x2C);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x2C);
     break;
 
   case OV5640_CONTRAST_LEVEL2P:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x28);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x28);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x28);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x28);
     break;
 
   case OV5640_CONTRAST_LEVEL1P:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x24);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x24);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x24);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x24);
     break;
 
   case OV5640_CONTRAST_LEVEL0:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x20);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x20);
     break;
 
   case OV5640_CONTRAST_LEVEL1N:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x1C);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x1C);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x1C);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x1C);
     break;
 
   case OV5640_CONTRAST_LEVEL2N:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x18);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x18);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x18);
     break;
 
   case OV5640_CONTRAST_LEVEL3N:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x14);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x14);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x14);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x14);
     break;
 
   case OV5640_CONTRAST_LEVEL4N:
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x10);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x10);
     break;
 
   default:
     /* Level 0 as default */
-    CAMERA_IO_Write(DeviceAddr, 0x5586, 0x20);
-    CAMERA_IO_Write(DeviceAddr, 0x5585, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5586, 0x20);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5585, 0x20);
     break;
   }
 
-  CAMERA_IO_Write(DeviceAddr, 0x5588, 0x41);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x41);
 }
 
 /**
@@ -874,88 +874,88 @@ void OV5640_SetContrast(uint16_t DeviceAddr, uint8_t Level)
   */
 void OV5640_SetHueDegree(uint16_t DeviceAddr, uint16_t Degree)
 {
-  CAMERA_IO_Write(DeviceAddr, 0x5001, 0xFF);
-  CAMERA_IO_Write(DeviceAddr, 0x5580, 0x01);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5001, 0xFF);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x5580, 0x01);
 
   switch(Degree)
   {
   case OV5640_HUE_150P:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x31);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x31);
     break;
 
   case OV5640_HUE_120P:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x31);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x31);
     break;
 
   case OV5640_HUE_90P:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x31);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x31);
     break;
 
   case OV5640_HUE_60P:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x01);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x01);
     break;
 
   case OV5640_HUE_30P:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x01);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x01);
     break;
 
   case OV5640_HUE_0:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x01);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x01);
     break;
 
   case OV5640_HUE_30N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x02);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x02);
     break;
 
   case OV5640_HUE_60N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x02);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x02);
     break;
 
   case OV5640_HUE_90N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x02);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x02);
     break;
 
   case OV5640_HUE_120N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x32);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x32);
     break;
 
   case OV5640_HUE_150N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x6F);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x40);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x32);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x6F);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x40);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x32);
     break;
 
   case OV5640_HUE_180N:
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x32);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x32);
     break;
 
   default:
     /* Hue degree 0 as default */
-    CAMERA_IO_Write(DeviceAddr, 0x5581, 0x80);
-    CAMERA_IO_Write(DeviceAddr, 0x5582, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5588, 0x01);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5581, 0x80);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5582, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5588, 0x01);
     break;
   }
 }
@@ -970,35 +970,35 @@ void OV5640_MirrorFlipConfig(uint16_t DeviceAddr, uint8_t Config)
 {
   uint8_t tmp3820 = 0, tmp3821;
 
-  tmp3820 = CAMERA_IO_Read(DeviceAddr, 0x3820);
+  tmp3820 = CAMERA_IO_Read_OV5640(DeviceAddr, 0x3820);
   tmp3820 &= 0xF9;
-  tmp3821 = CAMERA_IO_Read(DeviceAddr, 0x3821);
+  tmp3821 = CAMERA_IO_Read_OV5640(DeviceAddr, 0x3821);
   tmp3821 &= 0xF9;
 
   switch (Config)
   {
   case OV5640_MIRROR:
-    CAMERA_IO_Write(DeviceAddr, 0x3820, tmp3820 | 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x3821, tmp3821 | 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3820, tmp3820 | 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3821, tmp3821 | 0x06);
     break;
 
   case OV5640_FLIP:
-    CAMERA_IO_Write(DeviceAddr, 0x3820, tmp3820 | 0x06);
-    CAMERA_IO_Write(DeviceAddr, 0x3821, tmp3821 | 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3820, tmp3820 | 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3821, tmp3821 | 0x00);
     break;
   case OV5640_MIRROR_FLIP:
-    CAMERA_IO_Write(DeviceAddr, 0x3820, tmp3820 | 0x06);
-    CAMERA_IO_Write(DeviceAddr, 0x3821, tmp3821 | 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3820, tmp3820 | 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3821, tmp3821 | 0x06);
     break;
 
   case OV5640_MIRROR_FLIP_NORMAL:
-    CAMERA_IO_Write(DeviceAddr, 0x3820, tmp3820 | 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x3821, tmp3821 | 0x06);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3820, tmp3820 | 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3821, tmp3821 | 0x06);
     break;
 
   default:
-    CAMERA_IO_Write(DeviceAddr, 0x3820, tmp3820 | 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x3821, tmp3821 | 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3820, tmp3820 | 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x3821, tmp3821 | 0x00);
     break;
   }
 }
@@ -1018,7 +1018,7 @@ void OV5640_ZoomConfig(uint16_t DeviceAddr, uint8_t Zoom)
 
   if(Zoom == OV5640_ZOOM_x1)
   {
-    CAMERA_IO_Write(DeviceAddr, 0x5600, 0x10);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5600, 0x10);
   }
   else
   {
@@ -1035,8 +1035,8 @@ void OV5640_ZoomConfig(uint16_t DeviceAddr, uint8_t Zoom)
       break;
     }
 
-    CAMERA_IO_Write(DeviceAddr, 0x5600, 0x00);
-    CAMERA_IO_Write(DeviceAddr, 0x5601, Zoom);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5600, 0x00);
+    CAMERA_IO_Write_OV5640(DeviceAddr, 0x5601, Zoom);
   }
 }
 
@@ -1050,10 +1050,10 @@ int32_t OV5640_GetResolution(uint16_t DeviceAddr)
   uint16_t x_size = 0, y_size = 0;
   int32_t res = CAMERA_R640x480;
 
-  x_size = CAMERA_IO_Read(DeviceAddr, 0x3808) << 8;
-  x_size |= CAMERA_IO_Read(DeviceAddr, 0x3809);
-  y_size = CAMERA_IO_Read(DeviceAddr, 0x380A) << 8;
-  y_size |= CAMERA_IO_Read(DeviceAddr, 0x380B);
+  x_size = CAMERA_IO_Read_OV5640(DeviceAddr, 0x3808) << 8;
+  x_size |= CAMERA_IO_Read_OV5640(DeviceAddr, 0x3809);
+  y_size = CAMERA_IO_Read_OV5640(DeviceAddr, 0x380A) << 8;
+  y_size |= CAMERA_IO_Read_OV5640(DeviceAddr, 0x380B);
 
   if((x_size == 640) && (y_size == 480))
   {
@@ -1129,12 +1129,12 @@ uint16_t ov5640_ReadID(uint16_t DeviceAddr)
   CAMERA_IO_Init();
 
   /* Prepare the camera to be configured */
-  CAMERA_IO_Write(DeviceAddr, 0x3008, 0x80);
+  CAMERA_IO_Write_OV5640(DeviceAddr, 0x3008, 0x80);
   CAMERA_Delay(500);
 
-  read_val = CAMERA_IO_Read(DeviceAddr, 0x300A);
+  read_val = CAMERA_IO_Read_OV5640(DeviceAddr, 0x300A);
   read_val = read_val << 8;
-  read_val |= CAMERA_IO_Read(DeviceAddr, 0x300B);
+  read_val |= CAMERA_IO_Read_OV5640(DeviceAddr, 0x300B);
   /* Get the camera ID */
   return read_val;
 }
