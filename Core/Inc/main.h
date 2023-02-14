@@ -28,7 +28,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "camera_application.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -196,6 +195,8 @@ void Error_Handler(void);
 #define VCP_TX_GPIO_Port GPIOA
 #define RCC_OSC32_OUT_Pin GPIO_PIN_15
 #define RCC_OSC32_OUT_GPIO_Port GPIOC
+#define B_USER_Pin GPIO_PIN_11
+#define B_USER_GPIO_Port GPIOI
 #define LCD_G6_Pin GPIO_PIN_1
 #define LCD_G6_GPIO_Port GPIOK
 #define LCD_G7_Pin GPIO_PIN_2

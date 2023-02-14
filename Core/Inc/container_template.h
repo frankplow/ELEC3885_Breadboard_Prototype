@@ -50,10 +50,10 @@
 // project includes
 
 
-#define FRAME_RATE 1
-#define WIDTH 480
-#define HEIGHT 270
-#define DURATION 2
+#define FRAME_RATE 15
+#define WIDTH 320
+#define HEIGHT 240
+#define DURATION 0
 #define BIT_DEPTH 16
 #define SAMPLE_SIZE (WIDTH * HEIGHT * BIT_DEPTH / 8)
 #define DATA_SIZE (SAMPLE_SIZE * DURATION)

@@ -7,6 +7,9 @@
 
 #include "camera_application.h"
 
+#include <stdbool.h>
+
+#include <fatfs.h>
 
 DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
@@ -16,6 +19,8 @@ uint8_t frameCounter;
 uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 //uint8_t cam_fb_size, lcb_fb_size;
+
+bool frame_data_available = false;
 
 void LCD_init(void) {
 
@@ -64,8 +69,8 @@ printf("\n%i FPS\n", frameCounter);
 void BSP_CAMERA_FrameEventCallback(void) {
 	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)(cam_fb), (uint32_t *)(lcd_fb));
 	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
-	//printf("\nFrame Event Callback\n");
 	frameCounter++;
+	frame_data_available = true;
 }
 
 //void BSP_CAMERA_LineEventCallback(void)

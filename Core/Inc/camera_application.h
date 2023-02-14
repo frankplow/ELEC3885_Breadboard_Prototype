@@ -16,6 +16,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include <stdbool.h>
 
 #define X_RES 480
 #define Y_RES 272
@@ -31,5 +32,8 @@ void LCD_LL_ConvertLineToARGB8888(void *pSrc, void *pDst);
 void LCD_DMA_Transfer_RGBTOARGB8888(void *pSrc, void *pDst);
 void LCD_init(void);
 void FPSCalculate(void);
+
+extern uint8_t cam_fb[CAM_FB_SIZE];
+extern bool frame_data_available;
 
 #endif /* INC_CAMERA_H_ */

@@ -24,6 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
+
 #include <mutff.h>
 #include "camera_application.h"
 
@@ -110,6 +112,11 @@ SDRAM_HandleTypeDef hsdram1;
 /* USER CODE BEGIN PV */
 static FRESULT fatfs_err;
 static MuTFFError mutff_err;
+static bool should_exit = false;
+static MuTFFMovieFile movie_file = file_template;
+unsigned int fatfs_bytes;
+uint64_t content_size = 0;
+uint32_t content_duration = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,6 +151,7 @@ void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
 void mutff_init(void);
+void write_qtff_file(MuTFFMovieFile *file);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -223,57 +231,103 @@ int main(void)
 //  BSP_CAMERA_Init(CAMERA_R480x272);
 //  BSP_CAMERA_ContinuousStart((uint8_t *)CAMERA_FRAME_BUFFER);
 
-  if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
+if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
     {
       /* Starting Error */
       Error_Handler();
     }
 
-  LCD_init();
-  initialiseCapture();
-  mutff_init();
+	LCD_init();
+	initialiseCapture();
+	mutff_init();
 
-  // Mount filesystem
-  fatfs_err = f_mount(&SDFatFS, SDPath, 1);
-  if (fatfs_err != FR_OK) {
-    printf("failed to mount card, code: %i.\n", fatfs_err);
-    if (fatfs_err != FR_NOT_READY) {
-      printf("exiting.\n");
-      exit(fatfs_err);
-    }
-    printf("continuing.\n");
-  }
+	// Mount filesystem
+	fatfs_err = f_mount(&SDFatFS, SDPath, 1);
+	if (fatfs_err != FR_OK) {
+	printf("failed to mount card, code: %i.\n", fatfs_err);
+	if (fatfs_err != FR_NOT_READY) {
+	  printf("exiting.\n");
+	  exit(fatfs_err);
+	}
+	printf("continuing.\n");
+	}
 
-  // Open file
-  fatfs_err = f_open(&SDFile, "3885.mov", FA_WRITE | FA_CREATE_ALWAYS);
-  if (fatfs_err != FR_OK) {
-    printf("failed to open file, code: %i.\n", fatfs_err);
-    printf("exiting.\n");
-    exit(fatfs_err);
-  }
+	// Open file
+	fatfs_err = f_open(&SDFile, "3885.mov", FA_WRITE | FA_CREATE_ALWAYS);
+	if (fatfs_err != FR_OK) {
+		printf("failed to open file, code: %i.\n", fatfs_err);
+		printf("exiting.\n");
+		exit(fatfs_err);
+	}
 
-  // Write file
-  mutff_err = mutff_write_movie_file(&SDFile, NULL, &file_template);
-  if (mutff_err != MuTFFErrorNone) {
-	  printf("Failed to write file, code: %i\n", mutff_err);
-	  exit(mutff_err);
-  }
+	// Write file
+	mutff_err = mutff_write_movie_file(&SDFile, NULL, &movie_file);
+	if (mutff_err != MuTFFErrorNone) {
+		printf("Failed to write file, code: %i\n", mutff_err);
+		exit(mutff_err);
+	}
 
-  // Close file
-  fatfs_err = f_close(&SDFile);
-  if (fatfs_err != FR_OK) {
-    exit(fatfs_err);
-  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	while (!should_exit) {
+		if (HAL_GPIO_ReadPin(B_USER_GPIO_Port, B_USER_Pin)) {
+			should_exit = true;
+			continue;
+		}
+
+		if (frame_data_available) {
+			fatfs_err = f_write(&SDFile, cam_fb, CAM_FB_SIZE, &fatfs_bytes);
+			if (fatfs_err != FR_OK) {
+				printf("\nFatFS error: %i\n", fatfs_err);
+				Error_Handler();
+			}
+			if (fatfs_bytes != CAM_FB_SIZE) {
+				printf("\nFatFS wrote %ui bytes. Less than the expected %ui\n", fatfs_bytes, CAM_FB_SIZE);
+			}
+
+			content_size += fatfs_bytes;
+			content_duration++;
+			frame_data_available = false;
+		}
+
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
+	}
+
+	BSP_CAMERA_Stop();
+
+	movie_file.movie_data[0].data_size = content_size;
+	movie_file.movie.movie_header.duration = content_duration;
+	movie_file.movie.track[0].track_header.duration = content_duration;
+	movie_file.movie.track[0].media.media_header.duration = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.sample_to_chunk.sample_to_chunk_table[0].samples_per_chunk = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.time_to_sample.time_to_sample_table[0].sample_count = content_duration;
+
+	f_rewind(&SDFile);
+
+	// Write file
+	mutff_err = mutff_write_movie_file(&SDFile, NULL, &movie_file);
+	if (mutff_err != MuTFFErrorNone) {
+		printf("Failed to write file, code: %i\n", mutff_err);
+		exit(mutff_err);
+	}
+
+	// Close file
+	fatfs_err = f_close(&SDFile);
+	if (fatfs_err != FR_OK) {
+		exit(fatfs_err);
+	}
+
+	while (1) {
+	}
   }
   /* USER CODE END 3 */
 }
@@ -1633,6 +1687,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DCMI_PWR_EN_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : B_USER_Pin */
+  GPIO_InitStruct.Pin = B_USER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B_USER_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : LCD_INT_Pin */
   GPIO_InitStruct.Pin = LCD_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
@@ -1684,6 +1744,10 @@ void mutff_init() {
 	mutff_set_write_fn(mutff_write_fatfs);
 	mutff_set_tell_fn(mutff_tell_fatfs);
 	mutff_set_seek_fn(mutff_seek_fatfs);
+}
+
+void write_qtff_file(MuTFFMovieFile *file) {
+
 }
 /* USER CODE END 4 */
 
