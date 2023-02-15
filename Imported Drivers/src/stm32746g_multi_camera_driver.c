@@ -59,8 +59,7 @@ EndDependencies */
 #include "stdio.h"
 
 //Define camera module: OV9655, OV2640, OV5640
-#define OV9655
-
+#define OV2640
 /** @addtogroup BSP
   * @{
   */
@@ -134,7 +133,7 @@ static uint32_t GetSize(uint32_t resolution);
   *         naming QQVGA, QVGA, VGA ...
   * @retval Camera status
   */
-#ifdef OV2640
+#ifdef OV2640 //=====JPEG======
 uint8_t BSP_CAMERA_Init(uint32_t Resolution)
 { 
   DCMI_HandleTypeDef *phdcmi;
@@ -151,6 +150,7 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
   phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_LOW; //low for 02640
   phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
   phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
+  phdcmi->Init.JPEGMode 		= DCMI_JPEG_ENABLE; //ENABLE JPEG MODE
   phdcmi->Instance              = DCMI;
 
   status = CAMERA_ERROR;

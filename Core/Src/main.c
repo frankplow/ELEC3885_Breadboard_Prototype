@@ -231,7 +231,7 @@ int main(void)
 //  BSP_CAMERA_Init(CAMERA_R480x272);
 //  BSP_CAMERA_ContinuousStart((uint8_t *)CAMERA_FRAME_BUFFER);
 
-if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
+  if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
     {
       /* Starting Error */
       Error_Handler();
