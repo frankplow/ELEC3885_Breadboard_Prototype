@@ -19,14 +19,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "string.h"
-#include "cmsis_os.h"
 #include "fatfs.h"
 #include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
+
+#include <mutff.h>
 #include "camera_application.h"
 
+#include "mutff_fatfs.h"
+#include "container_template.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,6 +91,7 @@ SAI_HandleTypeDef hsai_BlockA2;
 SAI_HandleTypeDef hsai_BlockB2;
 
 SD_HandleTypeDef hsd1;
+DMA_HandleTypeDef hdma_sdmmc1;
 
 SPDIFRX_HandleTypeDef hspdif;
 
@@ -104,9 +109,14 @@ UART_HandleTypeDef huart6;
 
 SDRAM_HandleTypeDef hsdram1;
 
-osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
+static FRESULT fatfs_err;
+static MuTFFError mutff_err;
+static bool should_exit = false;
+static MuTFFMovieFile movie_file = file_template;
+unsigned int fatfs_bytes;
+uint64_t content_size = 0;
+uint32_t content_duration = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -137,10 +147,11 @@ static void MX_TIM12_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART6_UART_Init(void);
 static void MX_ADC3_Init(void);
-void StartDefaultTask(void const * argument);
+void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
-
+void mutff_init(void);
+void write_qtff_file(MuTFFMovieFile *file);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -213,58 +224,111 @@ int main(void)
   MX_USART6_UART_Init();
   MX_FATFS_Init();
   MX_ADC3_Init();
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
   //CAMERA_Init(CAMERA_R480x272);
   //Start_Video_Feed();
 //  BSP_CAMERA_Init(CAMERA_R480x272);
 //  BSP_CAMERA_ContinuousStart((uint8_t *)CAMERA_FRAME_BUFFER);
 
-  if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
+if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
     {
       /* Starting Error */
       Error_Handler();
     }
 
-  LCD_init();
-  initialiseCapture();
+	LCD_init();
+	initialiseCapture();
+	mutff_init();
+
+	// Mount filesystem
+	fatfs_err = f_mount(&SDFatFS, SDPath, 1);
+	if (fatfs_err != FR_OK) {
+	printf("failed to mount card, code: %i.\n", fatfs_err);
+	if (fatfs_err != FR_NOT_READY) {
+	  printf("exiting.\n");
+	  exit(fatfs_err);
+	}
+	printf("continuing.\n");
+	}
+
+	// Open file
+	fatfs_err = f_open(&SDFile, "3885.mov", FA_WRITE | FA_CREATE_ALWAYS);
+	if (fatfs_err != FR_OK) {
+		printf("failed to open file, code: %i.\n", fatfs_err);
+		printf("exiting.\n");
+		exit(fatfs_err);
+	}
+
+	// Write file
+	mutff_err = mutff_write_movie_file(&SDFile, NULL, &movie_file);
+	if (mutff_err != MuTFFErrorNone) {
+		printf("Failed to write file, code: %i\n", mutff_err);
+		exit(mutff_err);
+	}
+
+
   /* USER CODE END 2 */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 4096);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	while (!should_exit) {
+		if (HAL_GPIO_ReadPin(B_USER_GPIO_Port, B_USER_Pin)) {
+			should_exit = true;
+			continue;
+		}
+
+		if (frame_data_available) {
+			fatfs_err = f_write(&SDFile, cam_fb, CAM_FB_SIZE, &fatfs_bytes);
+			if (fatfs_err != FR_OK) {
+				printf("\nFatFS error: %i\n", fatfs_err);
+				Error_Handler();
+			}
+			if (fatfs_bytes != CAM_FB_SIZE) {
+				printf("\nFatFS wrote %ui bytes. Less than the expected %ui\n", fatfs_bytes, CAM_FB_SIZE);
+			}
+
+			content_size += fatfs_bytes;
+			content_duration++;
+			frame_data_available = false;
+		}
+
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
+	}
+
+	BSP_CAMERA_Stop();
+
+	movie_file.movie_data[0].data_size = content_size;
+	movie_file.movie.movie_header.duration = content_duration;
+	movie_file.movie.track[0].track_header.duration = content_duration;
+	movie_file.movie.track[0].media.media_header.duration = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.sample_to_chunk.sample_to_chunk_table[0].samples_per_chunk = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.time_to_sample.time_to_sample_table[0].sample_count = content_duration;
+	movie_file.movie.track[0].media.video_media_information.sample_table.sample_size.number_of_entries = content_duration;
+
+	f_rewind(&SDFile);
+
+	// Write file
+	mutff_err = mutff_write_movie_file(&SDFile, NULL, &movie_file);
+	if (mutff_err != MuTFFErrorNone) {
+		printf("Failed to write file, code: %i\n", mutff_err);
+		exit(mutff_err);
+	}
+
+	// Close file
+	fatfs_err = f_close(&SDFile);
+	if (fatfs_err != FR_OK) {
+		exit(fatfs_err);
+	}
+
+	while (1) {
+	}
   }
   /* USER CODE END 3 */
 }
@@ -947,7 +1011,7 @@ static void MX_SDMMC1_SD_Init(void)
   hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
   hsd1.Init.ClockDiv = 0;
   /* USER CODE BEGIN SDMMC1_Init 2 */
-
+  hsd1.Init.BusWide = SDMMC_BUS_WIDE_1B;
   /* USER CODE END SDMMC1_Init 2 */
 
 }
@@ -1455,8 +1519,11 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA2_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+  /* DMA2_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 
 }
 
@@ -1621,6 +1688,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DCMI_PWR_EN_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : B_USER_Pin */
+  GPIO_InitStruct.Pin = B_USER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B_USER_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : LCD_INT_Pin */
   GPIO_InitStruct.Pin = LCD_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
@@ -1667,28 +1740,17 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
+void mutff_init() {
+	mutff_set_read_fn(mutff_read_fatfs);
+	mutff_set_write_fn(mutff_write_fatfs);
+	mutff_set_tell_fn(mutff_tell_fatfs);
+	mutff_set_seek_fn(mutff_seek_fatfs);
 }
+
+void write_qtff_file(MuTFFMovieFile *file) {
+
+}
+/* USER CODE END 4 */
 
 /**
   * @brief  Period elapsed callback in non blocking mode

@@ -59,7 +59,7 @@ EndDependencies */
 #include "stdio.h"
 
 //Define camera module: OV9655, OV2640, OV5640
-#define OV5640
+#define OV9655
 
 /** @addtogroup BSP
   * @{
