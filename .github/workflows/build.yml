@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
 
       - name: Build
         uses: xanderhendriks/action-build-stm32cubeide@v7.2
