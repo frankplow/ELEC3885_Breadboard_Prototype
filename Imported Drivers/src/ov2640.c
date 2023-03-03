@@ -1255,7 +1255,7 @@ void ov2640_Init(uint16_t DeviceAddr, uint32_t resolution)
       } 
       break;
     }    
-  case CAMERA_R320x240: //JPEG
+  case CAMERA_R320x240_JPEG: //JPEG
     {
       for(index=0; index<(sizeof(OV2640_JPEG)/2); index++)
       {
@@ -1264,15 +1264,6 @@ void ov2640_Init(uint16_t DeviceAddr, uint32_t resolution)
       }
       printf("\ninitialsed resolution: CAMERA_R320x240 JPEG\n");
       break;
-//  case CAMERA_R320x240:
-//  {
-//  for(index=0; index<(sizeof(OV2640_QVGA)/2); index++)
-//  {
-//  CAMERA_IO_Write(DeviceAddr, OV2640_QVGA[index][0],
-//  OV2640_QVGA[index][1]);
-//  CAMERA_Delay(1);
-//  }
-//  break;
     }
   case CAMERA_R480x272:
     {
@@ -1284,32 +1275,41 @@ void ov2640_Init(uint16_t DeviceAddr, uint32_t resolution)
       break;
     }
   case CAMERA_R640x480: //JPEG
-//    {
-//    printf("\nInit 640 x 480px\n");
-//      for(index=0; index<(sizeof(OV2640_VGA)/2); index++)
-//      {
-//        CAMERA_IO_Write(DeviceAddr, OV2640_VGA[index][0], OV2640_VGA[index][1]);
-//        CAMERA_Delay(2);
-//      }
-//      break;
-//    }
-
 {
-printf("\nInit 640 x 480px JPEG\n");
+	printf("\nInit 640 x 480px JPEG\n");
 	for(index=0; index<(sizeof(OV2640_640x480_JPEG)/2); index++)
 	{
-	CAMERA_IO_Write(DeviceAddr, OV2640_640x480_JPEG[index][0], OV2640_640x480_JPEG[index][1]);
-	CAMERA_Delay(2);
+		CAMERA_IO_Write(DeviceAddr, OV2640_640x480_JPEG[index][0], OV2640_640x480_JPEG[index][1]);
+		CAMERA_Delay(2);
 	}
 	break;
 }
-
+  case CAMERA_R320x240:
+  {
+	  for(index=0; index<(sizeof(OV2640_QVGA)/2); index++)
+	  {
+		  CAMERA_IO_Write(DeviceAddr, OV2640_QVGA[index][0],
+		  OV2640_QVGA[index][1]);
+		  CAMERA_Delay(1);
+	  }
+	  break;
+  }
   default:
     {
       break;
     }
   }
 }
+
+  //    {
+  //    printf("\nInit 640 x 480px\n");
+  //      for(index=0; index<(sizeof(OV2640_VGA)/2); index++)
+  //      {
+  //        CAMERA_IO_Write(DeviceAddr, OV2640_VGA[index][0], OV2640_VGA[index][1]);
+  //        CAMERA_Delay(2);
+  //      }
+  //      break;
+  //    }
 
 /**
   * @brief  Configures the OV2640 camera feature.

@@ -280,7 +280,7 @@ int main(void)
 			continue;
 		}
 
-		if (frame_data_available) {
+		if (frame_packet_data_available) {
 			fatfs_err = f_write(&SDFile, cam_fb, CAM_FB_SIZE, &fatfs_bytes);
 			if (fatfs_err != FR_OK) {
 				printf("\nFatFS error: %i\n", fatfs_err);
@@ -292,7 +292,7 @@ int main(void)
 
 			content_size += fatfs_bytes;
 			content_duration++;
-			frame_data_available = false;
+			frame_packet_data_available = false;
 		}
 
     /* USER CODE END WHILE */

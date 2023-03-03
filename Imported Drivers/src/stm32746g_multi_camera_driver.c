@@ -150,7 +150,7 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
   phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_LOW; //low for 02640
   phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
   phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
-  phdcmi->Init.JPEGMode 		= DCMI_JPEG_ENABLE; //ENABLE JPEG MODE
+  //phdcmi->Init.JPEGMode 		= DCMI_JPEG_ENABLE; //ENABLE JPEG MODE
   phdcmi->Instance              = DCMI;
 
   status = CAMERA_ERROR;
@@ -543,6 +543,7 @@ static uint32_t GetSize(uint32_t resolution)
   case CAMERA_R320x240:
     {
       size =  0x9600;
+       //size = 0x3200;
     }
     break;
   case CAMERA_R480x272:
@@ -554,6 +555,12 @@ static uint32_t GetSize(uint32_t resolution)
     {
       size =  0x25800;
     }    
+    break;
+
+  case CAMERA_R320x240_JPEG:
+    {
+      size = 0x9600;
+    }
     break;
   default:
     {

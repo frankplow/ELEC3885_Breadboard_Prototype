@@ -89,6 +89,7 @@ typedef struct
 #define CAMERA_R320x240                 0x01   /* QVGA Resolution                      */
 #define CAMERA_R480x272                 0x02   /* 480x272 Resolution                   */
 #define CAMERA_R640x480                 0x03   /* VGA Resolution                       */  
+#define CAMERA_R320x240_JPEG			0x04 // 32x240_JPEG
 
 #define CAMERA_CONTRAST_BRIGHTNESS      0x00   /* Camera contrast brightness features  */
 #define CAMERA_BLACK_WHITE              0x01   /* Camera black white feature           */

@@ -15,9 +15,13 @@ DMA2D_HandleTypeDef hdma2d_eval;
 uint32_t  *ptrLcd;
 uint8_t status = CAMERA_OK;
 uint8_t frameCounter;
+uint8_t lineCounter;
+//JPEG counter
 uint8_t jpeg_packet_counter = 0;
 uint64_t jpeg_frame_size = 0;
 uint32_t jpeg_packet_size;
+
+
 
 uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
@@ -25,9 +29,10 @@ uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 
 
 bool frame_data_available = false;
+bool frame_packet_data_available = false;
+
 
 void LCD_init(void) {
-
 
 
 	BSP_LCD_Init();
@@ -47,27 +52,30 @@ void LCD_init(void) {
 
 void initialiseCapture(void) {
     memset(cam_fb, 255, CAM_FB_SIZE);
-	//BSP_CAMERA_Init(CAMERA_R480x272);
-    //BSP_CAMERA_Init(CAMERA_R640x480);
 	BSP_CAMERA_Init(CAMERA_R320x240);
 	BSP_CAMERA_ContinuousStart(cam_fb);
     //jpeg_packet_size= *((uint32_t *)0x4002642c);
 }
 
 BSP_CAMERA_LineEventCallback(void) {
-	jpeg_packet_counter++;
-	//printf("\ngot packet\n");
+	if (lineCounter >= 80) {
+	frame_packet_data_available = true;
+	lineCounter = 0;
+	} else {
+	lineCounter++;
+	}
+	//jpeg_packet_counter++;
 }
 
 BSP_CAMERA_VsyncEventCallback(void) {
 	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
-	frameCounter++;
+	//frameCounter++;
 	frame_data_available = true;
 	//jpeg_frame_size = ()jpeg_packet_counter * jpeg_packet_size;
-	printf("\nPACKET PER FRAME:  %i\n", jpeg_packet_counter);
-	printf("\nPACKET packet size:  %i\n", jpeg_packet_size);
-	printf("\nJPEG FRAME SIZE: %i\n", jpeg_frame_size);
-	jpeg_packet_counter = 0;
+//	printf("\nPACKET PER FRAME:  %i\n", jpeg_packet_counter);
+//	printf("\nPACKET packet size:  %i\n", jpeg_packet_size);
+//	printf("\nJPEG FRAME SIZE: %i\n", jpeg_frame_size);
+//	jpeg_packet_counter = 0;
 }
 
 
