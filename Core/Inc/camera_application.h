@@ -21,7 +21,7 @@
 //#define X_RES 320
 //#define Y_RES 240
 #define X_RES 320
-#define Y_RES 80
+#define Y_RES 40
 #define CAM_FB_SIZE X_RES * Y_RES * 2
 #define LCD_FB_SIZE 259200
 
@@ -37,6 +37,7 @@ void FPSCalculate(void);
 
 extern uint8_t cam_fb[CAM_FB_SIZE];
 extern bool frame_data_available;
-extern bool frame_packet_data_available;
+extern bool frame_packet_data_available1;
+extern bool frame_packet_data_available2;
 
 #endif /* INC_CAMERA_H_ */

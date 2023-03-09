@@ -152,6 +152,7 @@ void MX_USB_HOST_Process(void);
 /* USER CODE BEGIN PFP */
 void mutff_init(void);
 void write_qtff_file(MuTFFMovieFile *file);
+void DCMI_DMAXferHalfCplt(DMA_HandleTypeDef *hdma);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -279,21 +280,37 @@ int main(void)
 			should_exit = true;
 			continue;
 		}
+		if (frame_data_available) {
+			content_duration++;
+		}
 
-		if (frame_packet_data_available) {
-			fatfs_err = f_write(&SDFile, cam_fb, CAM_FB_SIZE, &fatfs_bytes);
+		if (frame_packet_data_available1) {
+			fatfs_err = f_write(&SDFile, cam_fb, CAM_FB_SIZE/2, &fatfs_bytes);
 			if (fatfs_err != FR_OK) {
 				printf("\nFatFS error: %i\n", fatfs_err);
 				Error_Handler();
 			}
-			if (fatfs_bytes != CAM_FB_SIZE) {
+			if (fatfs_bytes != CAM_FB_SIZE/2) {
 				printf("\nFatFS wrote %ui bytes. Less than the expected %ui\n", fatfs_bytes, CAM_FB_SIZE);
 			}
 
 			content_size += fatfs_bytes;
-			content_duration++;
-			frame_packet_data_available = false;
+			frame_packet_data_available1 = false;
 		}
+
+		if (frame_packet_data_available2) {
+					fatfs_err = f_write(&SDFile, cam_fb + CAM_FB_SIZE/2, CAM_FB_SIZE/2, &fatfs_bytes);
+					if (fatfs_err != FR_OK) {
+						printf("\nFatFS error: %i\n", fatfs_err);
+						Error_Handler();
+					}
+					if (fatfs_bytes != CAM_FB_SIZE/2) {
+						printf("\nFatFS wrote %ui bytes. Less than the expected %ui\n", fatfs_bytes, CAM_FB_SIZE);
+					}
+
+					content_size += fatfs_bytes;
+					frame_packet_data_available2 = false;
+				}
 
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
@@ -1750,6 +1767,153 @@ void mutff_init() {
 void write_qtff_file(MuTFFMovieFile *file) {
 
 }
+
+HAL_StatusTypeDef HAL_DCMI_Start_DMA(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mode, uint32_t pData, uint32_t Length)
+{
+  /* Initialize the second memory address */
+  uint32_t SecondMemAddress = 0;
+
+  /* Check function parameters */
+  assert_param(IS_DCMI_CAPTURE_MODE(DCMI_Mode));
+
+  /* Process Locked */
+  __HAL_LOCK(hdcmi);
+
+  /* Lock the DCMI peripheral state */
+  hdcmi->State = HAL_DCMI_STATE_BUSY;
+
+  /* Enable DCMI by setting DCMIEN bit */
+  __HAL_DCMI_ENABLE(hdcmi);
+
+  /* Configure the DCMI Mode */
+  hdcmi->Instance->CR &= ~(DCMI_CR_CM);
+  hdcmi->Instance->CR |= (uint32_t)(DCMI_Mode);
+
+  /* Set the DMA memory0 conversion complete callback */
+  hdcmi->DMA_Handle->XferCpltCallback = DCMI_DMAXferCplt;
+  hdcmi->DMA_Handle->XferHalfCpltCallback = DCMI_DMAXferHalfCplt;
+
+
+  /* Set the DMA error callback */
+  hdcmi->DMA_Handle->XferErrorCallback = DCMI_DMAError;
+
+  /* Set the dma abort callback */
+  hdcmi->DMA_Handle->XferAbortCallback = NULL;
+
+  /* Reset transfer counters value */
+  hdcmi->XferCount = 0;
+  hdcmi->XferTransferNumber = 0;
+  hdcmi->XferSize = 0;
+  hdcmi->pBuffPtr = 0;
+
+  if (Length <= 0xFFFFU)
+  {
+    /* Enable the DMA Stream */
+    if (HAL_DMA_Start_IT(hdcmi->DMA_Handle, (uint32_t)&hdcmi->Instance->DR, (uint32_t)pData, Length) != HAL_OK)
+    {
+      return HAL_ERROR;
+    }
+  }
+  else /* DCMI_DOUBLE_BUFFER Mode */
+  {
+    /* Set the DMA memory1 conversion complete callback */
+    hdcmi->DMA_Handle->XferM1CpltCallback = DCMI_DMAXferCplt;
+
+    /* Initialize transfer parameters */
+    hdcmi->XferCount = 1;
+    hdcmi->XferSize = Length;
+    hdcmi->pBuffPtr = pData;
+
+    /* Get the number of buffer */
+    while (hdcmi->XferSize > 0xFFFFU)
+    {
+      hdcmi->XferSize = (hdcmi->XferSize / 2U);
+      hdcmi->XferCount = hdcmi->XferCount * 2U;
+    }
+
+    /* Update DCMI counter  and transfer number*/
+    hdcmi->XferCount = (hdcmi->XferCount - 2U);
+    hdcmi->XferTransferNumber = hdcmi->XferCount;
+
+    /* Update second memory address */
+    SecondMemAddress = (uint32_t)(pData + (4 * hdcmi->XferSize));
+
+    /* Start DMA multi buffer transfer */
+    if (HAL_DMAEx_MultiBufferStart_IT(hdcmi->DMA_Handle, (uint32_t)&hdcmi->Instance->DR, (uint32_t)pData, SecondMemAddress, hdcmi->XferSize) != HAL_OK)
+    {
+      return HAL_ERROR;
+    }
+  }
+
+  /* Enable Capture */
+  hdcmi->Instance->CR |= DCMI_CR_CAPTURE;
+
+  /* Release Lock */
+  __HAL_UNLOCK(hdcmi);
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+
+void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
+{
+  uint32_t tmp = 0;
+
+  DCMI_HandleTypeDef *hdcmi = (DCMI_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdcmi->XferCount != 0)
+  {
+    /* Update memory 0 address location */
+    tmp = ((hdcmi->DMA_Handle->Instance->CR) & DMA_SxCR_CT);
+    if (((hdcmi->XferCount % 2) == 0) && (tmp != 0))
+    {
+      tmp = hdcmi->DMA_Handle->Instance->M0AR;
+      HAL_DMAEx_ChangeMemory(hdcmi->DMA_Handle, (tmp + (8 * hdcmi->XferSize)), MEMORY0);
+      hdcmi->XferCount--;
+    }
+    /* Update memory 1 address location */
+    else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) == 0)
+    {
+      tmp = hdcmi->DMA_Handle->Instance->M1AR;
+      HAL_DMAEx_ChangeMemory(hdcmi->DMA_Handle, (tmp + (8 * hdcmi->XferSize)), MEMORY1);
+      hdcmi->XferCount--;
+    }
+  }
+  /* Update memory 0 address location */
+  else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) != 0)
+  {
+    hdcmi->DMA_Handle->Instance->M0AR = hdcmi->pBuffPtr;
+  }
+  /* Update memory 1 address location */
+  else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) == 0)
+  {
+    tmp = hdcmi->pBuffPtr;
+    hdcmi->DMA_Handle->Instance->M1AR = (tmp + (4 * hdcmi->XferSize));
+    hdcmi->XferCount = hdcmi->XferTransferNumber;
+  }
+
+  /* Enable the Frame interrupt */
+  frame_packet_data_available2 = true;
+
+  /* Check if the frame is transferred */
+  if (hdcmi->XferCount == hdcmi->XferTransferNumber)
+  {
+	__HAL_DCMI_ENABLE_IT(hdcmi, DCMI_IT_FRAME);
+
+	}
+
+    /* When snapshot mode, set dcmi state to ready */
+    if ((hdcmi->Instance->CR & DCMI_CR_CM) == DCMI_MODE_SNAPSHOT)
+    {
+      hdcmi->State = HAL_DCMI_STATE_READY;
+    }
+  }
+
+void DCMI_DMAXferHalfCplt(DMA_HandleTypeDef *hdma) {
+	frame_packet_data_available1 = true;
+}
+
 /* USER CODE END 4 */
 
 /**

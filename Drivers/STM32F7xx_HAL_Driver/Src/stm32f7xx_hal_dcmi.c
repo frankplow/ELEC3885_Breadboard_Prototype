@@ -124,6 +124,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "stdio.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -143,8 +144,6 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-static void       DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma);
-static void       DCMI_DMAError(DMA_HandleTypeDef *hdma);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -174,6 +173,7 @@ static void       DCMI_DMAError(DMA_HandleTypeDef *hdma);
   *                the configuration information for DCMI.
   * @retval HAL status
   */
+uint8_t partialFrameCounter = 0;
 HAL_StatusTypeDef HAL_DCMI_Init(DCMI_HandleTypeDef *hdcmi)
 {
   /* Check the DCMI peripheral state */
@@ -371,7 +371,7 @@ __weak void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef *hdcmi)
   * @param  Length    The length of capture to be transferred.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DCMI_Start_DMA(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mode, uint32_t pData, uint32_t Length)
+__weak HAL_StatusTypeDef HAL_DCMI_Start_DMA(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mode, uint32_t pData, uint32_t Length)
 {
   /* Initialize the second memory address */
   uint32_t SecondMemAddress = 0;
@@ -394,6 +394,8 @@ HAL_StatusTypeDef HAL_DCMI_Start_DMA(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mo
 
   /* Set the DMA memory0 conversion complete callback */
   hdcmi->DMA_Handle->XferCpltCallback = DCMI_DMAXferCplt;
+  //hdcmi->DMA_Handle->XferHalfCpltCallback = DCMI_DMAXferHalfCplt;
+
 
   /* Set the DMA error callback */
   hdcmi->DMA_Handle->XferErrorCallback = DCMI_DMAError;
@@ -1106,7 +1108,7 @@ HAL_StatusTypeDef HAL_DCMI_UnRegisterCallback(DCMI_HandleTypeDef *hdcmi, HAL_DCM
 *                the configuration information for the specified DMA module.
 * @retval None
 */
-static void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
+__weak void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
 {
   uint32_t tmp = 0;
 
@@ -1143,11 +1145,22 @@ static void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
     hdcmi->XferCount = hdcmi->XferTransferNumber;
   }
 
+  /* Enable the Frame interrupt */
+
+    	if (partialFrameCounter >= 39) {
+  		partialFrameCounter = 0;
+  		printf("\n whole frame\n");
+    	} else  {
+    		partialFrameCounter++;
+    		printf("\nframe fraction\n");
+    	}
+
   /* Check if the frame is transferred */
   if (hdcmi->XferCount == hdcmi->XferTransferNumber)
   {
-    /* Enable the Frame interrupt */
-    __HAL_DCMI_ENABLE_IT(hdcmi, DCMI_IT_FRAME);
+	__HAL_DCMI_ENABLE_IT(hdcmi, DCMI_IT_FRAME);
+
+	}
 
     /* When snapshot mode, set dcmi state to ready */
     if ((hdcmi->Instance->CR & DCMI_CR_CM) == DCMI_MODE_SNAPSHOT)
@@ -1155,7 +1168,7 @@ static void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
       hdcmi->State = HAL_DCMI_STATE_READY;
     }
   }
-}
+
 
 /**
   * @brief  DMA error callback
@@ -1163,7 +1176,7 @@ static void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
   *                the configuration information for the specified DMA module.
   * @retval None
   */
-static void DCMI_DMAError(DMA_HandleTypeDef *hdma)
+void DCMI_DMAError(DMA_HandleTypeDef *hdma)
 {
   DCMI_HandleTypeDef *hdcmi = (DCMI_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
 

@@ -51,8 +51,8 @@
 
 
 #define FRAME_RATE 15
-#define WIDTH 480
-#define HEIGHT 272
+#define WIDTH 320
+#define HEIGHT 240
 #define DURATION 0
 #define BIT_DEPTH 16
 #define SAMPLE_SIZE (WIDTH * HEIGHT * BIT_DEPTH / 8)
@@ -68,8 +68,8 @@ const MuTFFSampleDescription sample_desc_template = {
 				0x00, 0x00, 0x00, 0x00,    // Vendor
 				0x00, 0x00, 0x00, 0x00,    // Temporal quality
 				0x00, 0x00, 0x00, 0x00,    // Spatial quality
-				0x01, 0xe0,                // Width
-				0x01, 0x0e,                // Height
+				0x01, 0x40,                // Width
+				0x00, 0xf0,                // Height
 				0x00, 0x48, 0x00, 0x00,    // Horizontal resolution
 				0x00, 0x48, 0x00, 0x00,    // Vertical resolution
 				0x00, 0x00, 0x00, 0x00,    // Data size

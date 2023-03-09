@@ -23,13 +23,15 @@ uint32_t jpeg_packet_size;
 
 
 
-uint8_t cam_fb[CAM_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+uint8_t cam_fb[CAM_FB_SIZE];// __attribute__ ((section (".sdram"), aligned (4)));
 uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 
 
 
 bool frame_data_available = false;
-bool frame_packet_data_available = false;
+bool frame_packet_data_available1 = false;
+bool frame_packet_data_available2 = false;
+
 
 
 void LCD_init(void) {
@@ -58,12 +60,16 @@ void initialiseCapture(void) {
 }
 
 BSP_CAMERA_LineEventCallback(void) {
-	if (lineCounter >= 80) {
-	frame_packet_data_available = true;
-	lineCounter = 0;
-	} else {
-	lineCounter++;
-	}
+//	lineCounter++;
+//
+//	if (lineCounter == 20) {
+//		//printf("\n80 lines\n");
+//		frame_packet_data_available1 = true;
+//	} else if (lineCounter >= 40) {
+//		lineCounter = 0;
+//		frame_packet_data_available2 = true;
+//	}
+
 	//jpeg_packet_counter++;
 }
 

@@ -542,8 +542,12 @@ static uint32_t GetSize(uint32_t resolution)
     break;    
   case CAMERA_R320x240:
     {
-      size =  0x9600;
-       //size = 0x3200;
+      //size =  0x9600;
+      //size = 0x3200; 1/3
+    	//size = 0xC80; 1/12
+    	size = 0x1900;
+
+
     }
     break;
   case CAMERA_R480x272:
