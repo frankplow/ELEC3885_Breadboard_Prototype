@@ -50,7 +50,7 @@
 // project includes
 
 
-#define FRAME_RATE 15
+#define FRAME_RATE 9
 #define WIDTH 320
 #define HEIGHT 240
 #define DURATION 0
@@ -59,7 +59,7 @@
 #define DATA_SIZE (SAMPLE_SIZE * DURATION)
 
 const MuTFFSampleDescription sample_desc_template = {
-		MuTFF_FOURCC('r', 'a', 'w', ' '),  // Data format
+		MuTFF_FOURCC('j', 'p', 'e', 'g'),  // Data format
 		1,                                 // Data reference index
 		70,                                // Additional data size
 		{                                  // Additional data

@@ -54,7 +54,9 @@ void LCD_init(void) {
 
 void initialiseCapture(void) {
     memset(cam_fb, 255, CAM_FB_SIZE);
-	BSP_CAMERA_Init(CAMERA_R320x240);
+	//BSP_CAMERA_Init(CAMERA_R320x240);
+    BSP_CAMERA_Init(FMT_JPEG, 320, 240);
+    //BSP_CAMERA_Init(FMT_JPEG, 800, );
 	BSP_CAMERA_ContinuousStart(cam_fb);
     //jpeg_packet_size= *((uint32_t *)0x4002642c);
 }
@@ -75,7 +77,7 @@ BSP_CAMERA_LineEventCallback(void) {
 
 BSP_CAMERA_VsyncEventCallback(void) {
 	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
-	//frameCounter++;
+	frameCounter++;
 	frame_data_available = true;
 	//jpeg_frame_size = ()jpeg_packet_counter * jpeg_packet_size;
 //	printf("\nPACKET PER FRAME:  %i\n", jpeg_packet_counter);

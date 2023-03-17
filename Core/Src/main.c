@@ -282,6 +282,7 @@ int main(void)
 		}
 		if (frame_data_available) {
 			content_duration++;
+			frame_data_available = false;
 		}
 
 		if (frame_packet_data_available1) {

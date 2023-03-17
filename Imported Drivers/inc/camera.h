@@ -72,7 +72,7 @@ typedef struct
 {
   void     (*Init)(uint16_t, uint32_t);
   uint16_t (*ReadID)(uint16_t);  
-  void     (*Config)(uint16_t, uint32_t, uint32_t, uint32_t);
+  void     (*Config)(uint32_t, uint32_t, uint32_t);
 }CAMERA_DrvTypeDef;
 /**
   * @}
@@ -85,11 +85,21 @@ typedef struct
 /** @defgroup CAMERA_Exported_Constants
   * @{
   */
+
+#define FMT_JPEG 0x00
+#define FMT_RGB565 0x01
+
+#define OV5640_PCLK_7M                  0x00   /* Pixel Clock set to 7Mhz    */
+#define OV5640_PCLK_8M                  0x01   /* Pixel Clock set to 8Mhz    */
+#define OV5640_PCLK_9M                  0x02   /* Pixel Clock set to 9Mhz    */
+#define OV5640_PCLK_12M                 0x04   /* Pixel Clock set to 12Mhz   */
+#define OV5640_PCLK_24M                 0x08
+
 #define CAMERA_R160x120                 0x00   /* QQVGA Resolution                     */
 #define CAMERA_R320x240                 0x01   /* QVGA Resolution                      */
 #define CAMERA_R480x272                 0x02   /* 480x272 Resolution                   */
-#define CAMERA_R640x480                 0x03   /* VGA Resolution                       */  
-#define CAMERA_R320x240_JPEG			0x04 // 32x240_JPEG
+#define CAMERA_R640x480                 0x03   /* VGA Resolution */
+#define CAMERA_R600x800                 0x04
 
 #define CAMERA_CONTRAST_BRIGHTNESS      0x00   /* Camera contrast brightness features  */
 #define CAMERA_BLACK_WHITE              0x01   /* Camera black white feature           */
