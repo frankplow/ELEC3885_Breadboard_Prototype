@@ -24,7 +24,7 @@ uint32_t jpeg_packet_size;
 
 
 uint8_t cam_fb[CAM_FB_SIZE];// __attribute__ ((section (".sdram"), aligned (4)));
-uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
+//uint8_t lcd_fb[LCD_FB_SIZE] __attribute__ ((section (".sdram"), aligned (4)));
 
 
 
@@ -34,27 +34,27 @@ bool frame_packet_data_available2 = false;
 
 
 
-void LCD_init(void) {
-
-
-	BSP_LCD_Init();
-	uint32_t  *ptrLcd;
-	/* Init LCD screen buffer */
-	ptrLcd = (uint32_t*)(lcd_fb);
-	for (int i=0; i<(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()); i++)
-	{
-	ptrLcd[i]=0;
-	}
-	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, lcd_fb);
-
-	/* Set LCD Foreground Layer  */
-	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
-		  printf("done screen\n");
-}
+//void LCD_init(void) {
+//
+//
+//	BSP_LCD_Init();
+//	uint32_t  *ptrLcd;
+//	/* Init LCD screen buffer */
+//	ptrLcd = (uint32_t*)(lcd_fb);
+//	for (int i=0; i<(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()); i++)
+//	{
+//	ptrLcd[i]=0;
+//	}
+//	BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, lcd_fb);
+//
+//	/* Set LCD Foreground Layer  */
+//	BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
+//		  printf("done screen\n");
+//}
 
 void initialiseCapture(void) {
     memset(cam_fb, 255, CAM_FB_SIZE);
-	BSP_CAMERA_Init(CAMERA_R320x240);
+	BSP_CAMERA_Init(FMT_RGB565, 320, 240);
 	BSP_CAMERA_ContinuousStart(cam_fb);
     //jpeg_packet_size= *((uint32_t *)0x4002642c);
 }
@@ -74,7 +74,7 @@ BSP_CAMERA_LineEventCallback(void) {
 }
 
 BSP_CAMERA_VsyncEventCallback(void) {
-	LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
+	//LCD_DMA_Transfer_RGBTOARGB8888((uint32_t *)cam_fb, (uint32_t *)lcd_fb);
 	//frameCounter++;
 	frame_data_available = true;
 	//jpeg_frame_size = ()jpeg_packet_counter * jpeg_packet_size;

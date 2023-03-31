@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stm32746g_multi_camera_driver.h"
+#include "Cam_settings.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

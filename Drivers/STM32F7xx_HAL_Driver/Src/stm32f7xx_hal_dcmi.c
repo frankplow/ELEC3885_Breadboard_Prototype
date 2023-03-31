@@ -1152,7 +1152,7 @@ __weak void DCMI_DMAXferCplt(DMA_HandleTypeDef *hdma)
   		printf("\n whole frame\n");
     	} else  {
     		partialFrameCounter++;
-    		printf("\nframe fraction\n");
+    		//printf("\nframe fraction\n");
     	}
 
   /* Check if the frame is transferred */

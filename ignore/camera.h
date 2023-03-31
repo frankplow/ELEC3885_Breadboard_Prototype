@@ -85,6 +85,17 @@ typedef struct
 /** @defgroup CAMERA_Exported_Constants
   * @{
   */
+
+#define FMT_JPEG 0x00
+#define FMT_RGB565 0x01
+
+#define OV5640_PCLK_7M                  0x00   /* Pixel Clock set to 7Mhz    */
+#define OV5640_PCLK_8M                  0x01   /* Pixel Clock set to 8Mhz    */
+#define OV5640_PCLK_9M                  0x02   /* Pixel Clock set to 9Mhz    */
+#define OV5640_PCLK_12M                 0x04   /* Pixel Clock set to 12Mhz   */
+#define OV5640_PCLK_24M                 0x08
+
+
 #define CAMERA_R160x120                 0x00   /* QQVGA Resolution                     */
 #define CAMERA_R320x240                 0x01   /* QVGA Resolution                      */
 #define CAMERA_R480x272                 0x02   /* 480x272 Resolution                   */

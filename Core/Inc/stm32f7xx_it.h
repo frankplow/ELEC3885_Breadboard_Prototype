@@ -28,6 +28,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
+#include "stm32746g_multi_camera_driver.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

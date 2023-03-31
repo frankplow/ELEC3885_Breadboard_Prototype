@@ -1,282 +1,39 @@
-/**
-  ******************************************************************************
-  * @file    stm32746g_discovery_camera.c
-  * @author  MCD Application Team
-  * @brief   This file includes the driver for Camera modules mounted on
-  *          STM32746G-Discovery board.
-  *
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2016 STMicroelectronics + Sol
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  @verbatim
-    How to use this driver:
-    ------------------------
-     - This driver is used to drive the camera.
-     - The OV9655 component driver MUST be included with this driver.
-    
-    Driver description:
-    -------------------
-    + Initialization steps:
-       o Initialize the camera using the BSP_CAMERA_Init() function.
-       o Start the camera capture/snapshot using the CAMERA_Start() function.
-       o Suspend, resume or stop the camera capture using the following functions:
-        - BSP_CAMERA_Suspend()
-        - BSP_CAMERA_Resume()
-        - BSP_CAMERA_Stop()
-        
-    + Options
-       o Increase or decrease on the fly the brightness and/or contrast
-         using the following function:
-         - BSP_CAMERA_ContrastBrightnessConfig 
-       o Add a special effect on the fly using the following functions:
-         - BSP_CAMERA_BlackWhiteConfig()
-         - BSP_CAMERA_ColorEffectConfig()
-  @endverbatim
-  ******************************************************************************
-  */ 
-
-/* Dependencies
-- stm32746g_discovery.c
-- stm32f7xx_hal_dcmi.c
-- stm32f7xx_hal_dma.c
-- stm32f7xx_hal_gpio.c
-- stm32f7xx_hal_cortex.c
-- stm32f7xx_hal_rcc_ex.h
-- ov9655.c
-EndDependencies */
-
-/* Includes ------------------------------------------------------------------*/
-#include <stm32746g_multi_camera_driver.h>
-#include "stm32746g_discovery.h"
+#include "stm32746g_multi_camera_driver.h"
+#include "camera_I2C.h"
 #include "stdio.h"
+#include "stdbool.h"
 
-//Define camera module: OV9655, OV2640, OV5640
-#define OV2640
-/** @addtogroup BSP
-  * @{
-  */
+#define OV5640
 
-/** @addtogroup STM32746G_DISCOVERY
-  * @{
-  */
-    
-/** @addtogroup STM32746G_DISCOVERY_CAMERA
-  * @{
-  */ 
+uint8_t cam_fb[CAM_FB_SIZE];// __attribute__ ((section (".sdram"), aligned (4)));
+// uint8_t jpeg_search_buffer[CAM_FB_SIZE];
+uint8_t frameCounter = 0;
+uint8_t *cam_data_location;
+uint8_t buffer_offset;
+uint8_t packetCounter = 0;
 
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Private_TypesDefinitions STM32746G_DISCOVERY_CAMERA Private Types Definitions
-  * @{
-  */ 
-/**
-  * @}
-  */ 
 
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Private_Defines STM32746G_DISCOVERY_CAMERA Private Defines
-  * @{
-  */
-#define CAMERA_VGA_RES_X          640
-#define CAMERA_VGA_RES_Y          480
-#define CAMERA_480x272_RES_X      480
-#define CAMERA_480x272_RES_Y      272
-#define CAMERA_QVGA_RES_X         320
-#define CAMERA_QVGA_RES_Y         240
-#define CAMERA_QQVGA_RES_X        160
-#define CAMERA_QQVGA_RES_Y        120
-/**
-  * @}
-  */ 
-  
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Private_Macros STM32746G_DISCOVERY_CAMERA Private Macros
-  * @{
-  */
-/**
-  * @}
-  */  
+void DCMI_DMA_TRANSFER_HALF_COMPLETE(DMA_HandleTypeDef *hdma);
+void DCMI_DMA_TRANSFER_COMPLETE(DMA_HandleTypeDef *hdma);
 
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Private_Variables STM32746G_DISCOVERY_CAMERA Private Variables
-  * @{
-  */ 
 DCMI_HandleTypeDef  hDcmiHandler;
 CAMERA_DrvTypeDef   *camera_drv;
 /* Camera current resolution naming (QQVGA, VGA, ...) */
 static uint32_t CameraCurrentResolution;
 
-/* Camera module I2C HW address */
-static uint32_t CameraHwAddress;
-/**
-  * @}
-  */ 
-  
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Private_FunctionPrototypes STM32746G_DISCOVERY_CAMERA Private Function Prototypes
-  * @{
-  */
-static uint32_t GetSize(uint32_t resolution);
-/**
-  * @}
-  */ 
-  
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Exported_Functions STM32746G_DISCOVERY_CAMERA Exported Functions
-  * @{
-  */
+uint32_t JPEG_counter = 0;
+uint32_t current_JPEG_size = 0;
+uint8_t bufferblockcounter;
 
-/**
-  * @brief  Initializes the camera.
-  * @param  Resolution : camera sensor requested resolution (x, y) : standard resolution
-  *         naming QQVGA, QVGA, VGA ...
-  * @retval Camera status
-  */
-#ifdef OV2640 //=====JPEG======
-uint8_t BSP_CAMERA_Init(uint32_t Resolution)
-{ 
-  DCMI_HandleTypeDef *phdcmi;
-  uint8_t status = CAMERA_ERROR;
+uint16_t JPEG_Size = 0;
+uint16_t JPEG_FIFO_SIZE_BUFFER[20];
+uint16_t JPEG_HEX_SIZE_BUFFER[20];
+uint16_t JPEG_PACKET_COUNT_BUFFER[20];
 
-  /* Get the DCMI handle structure */
-  phdcmi = &hDcmiHandler;
 
-  /*** Configures the DCMI to interface with the camera module ***/
-  /* DCMI configuration */
-  phdcmi->Init.CaptureRate      = DCMI_CR_ALL_FRAME;
-  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_LOW;
-  phdcmi->Init.SynchroMode      = DCMI_SYNCHRO_HARDWARE;
-  phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_LOW; //low for 02640
-  phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
-  phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
-  //phdcmi->Init.JPEGMode 		= DCMI_JPEG_ENABLE; //ENABLE JPEG MODE
-  phdcmi->Instance              = DCMI;
-
-  status = CAMERA_ERROR;
-
-  /* Power up camera */
-  BSP_CAMERA_PwrUp();
-  printf("\n ov2640 Init\n");
-
-  /* Read ID of Camera module via I2C */
-  if(ov2640_ReadID(CAMERA_I2C_ADDRESS) == OV2640_ID)
-  {
-	printf("\nOV2640 device ID read\n");
-    /* Initialize the camera driver structure */
-    camera_drv = &ov2640_drv;
-    CameraHwAddress = CAMERA_I2C_ADDRESS;
-
-    /* DCMI Initialization */
-    BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
-    HAL_DCMI_Init(phdcmi);
-
-    /* Camera Module Initialization via I2C to the wanted 'Resolution' */
-    if (Resolution == CAMERA_R480x272)
-    {     /* For 480x272 resolution, the OV9655 sensor is set to VGA resolution
-           * as OV9655 doesn't supports 480x272 resolution,
-           * then DCMI is configured to output a 480x272 cropped window */
-      camera_drv->Init(CameraHwAddress, CAMERA_R640x480);
-      HAL_DCMI_ConfigCROP(phdcmi,           /* Crop in the middle of the VGA picture */
-                         (CAMERA_VGA_RES_X - CAMERA_480x272_RES_X)/2,
-                         (CAMERA_VGA_RES_Y - CAMERA_480x272_RES_Y)/2,
-                         (CAMERA_480x272_RES_X * 2) - 1,
-                          CAMERA_480x272_RES_Y - 1);
-      HAL_DCMI_EnableCROP(phdcmi);
-    }
-    else
-    {
-      camera_drv->Init(CameraHwAddress, Resolution);
-      HAL_DCMI_DisableCROP(phdcmi);
-    }
-
-    CameraCurrentResolution = Resolution;
-
-    /* Return CAMERA_OK status */
-    status = CAMERA_OK;
-  }
-  else
-  {
-    /* Return CAMERA_NOT_SUPPORTED status */
-    status = CAMERA_NOT_SUPPORTED;
-    printf("\nOV2640 device ID read FAILED\n");
-  }
-
-  return status;
-}
-#endif
-
-#ifdef OV9655
-uint8_t BSP_CAMERA_Init(uint32_t Resolution)
-{
-  DCMI_HandleTypeDef *phdcmi;
-  uint8_t status = CAMERA_ERROR;
-
-  /* Get the DCMI handle structure */
-  phdcmi = &hDcmiHandler;
-
-  /*** Configures the DCMI to interface with the camera module ***/
-  /* DCMI configuration */
-  phdcmi->Init.CaptureRate      = DCMI_CR_ALL_FRAME;
-  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_LOW;
-  phdcmi->Init.SynchroMode      = DCMI_SYNCHRO_HARDWARE;
-  phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_HIGH;
-  phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
-  phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
-  phdcmi->Instance              = DCMI;
-
-  status = CAMERA_ERROR;
-
-  /* Power up camera */
-  BSP_CAMERA_PwrUp();
-
-  /* Read ID of Camera module via I2C */
-  if(ov9655_ReadID(CAMERA_I2C_ADDRESS) == OV9655_ID)
-  {
-    /* Initialize the camera driver structure */
-    camera_drv = &ov9655_drv;
-    CameraHwAddress = CAMERA_I2C_ADDRESS;
-
-    /* DCMI Initialization */
-    BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
-    HAL_DCMI_Init(phdcmi);
-
-    /* Camera Module Initialization via I2C to the wanted 'Resolution' */
-    if (Resolution == CAMERA_R480x272)
-    {     /* For 480x272 resolution, the OV9655 sensor is set to VGA resolution
-           * as OV9655 doesn't supports 480x272 resolution,
-           * then DCMI is configured to output a 480x272 cropped window */
-      camera_drv->Init(CameraHwAddress, CAMERA_R640x480);
-      HAL_DCMI_ConfigCROP(phdcmi,           /* Crop in the middle of the VGA picture */
-                         (CAMERA_VGA_RES_X - CAMERA_480x272_RES_X)/2,
-                         (CAMERA_VGA_RES_Y - CAMERA_480x272_RES_Y)/2,
-                         (CAMERA_480x272_RES_X * 2) - 1,
-                          CAMERA_480x272_RES_Y - 1);
-      HAL_DCMI_EnableCROP(phdcmi);
-    }
-    else
-    {
-      camera_drv->Init(CameraHwAddress, Resolution);
-      HAL_DCMI_DisableCROP(phdcmi);
-    }
-
-    CameraCurrentResolution = Resolution;
-
-    /* Return CAMERA_OK status */
-    status = CAMERA_OK;
-  }
-  else
-  {
-    /* Return CAMERA_NOT_SUPPORTED status */
-    status = CAMERA_NOT_SUPPORTED;
-  }
-
-  return status;
-}
-#endif
 
 #ifdef OV5640
-uint8_t BSP_CAMERA_Init(uint32_t Resolution)
+uint8_t CAM_Init(uint8_t format, uint16_t x_res, uint16_t y_res, uint16_t FPS, uint16_t FB_size, uint16_t FIFO_width, uint8_t jpeg_comp_ratio)
 {
   DCMI_HandleTypeDef *phdcmi;
   uint8_t status = CAMERA_ERROR;
@@ -287,16 +44,19 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
   /*** Configures the DCMI to interface with the camera module ***/
   /* DCMI configuration */
   phdcmi->Init.CaptureRate      = DCMI_CR_ALL_FRAME;
-  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_HIGH; //updated for ov5640
+  phdcmi->Init.HSPolarity       = DCMI_HSPOLARITY_HIGH;
   phdcmi->Init.SynchroMode      = DCMI_SYNCHRO_HARDWARE;
   phdcmi->Init.VSPolarity       = DCMI_VSPOLARITY_HIGH;
   phdcmi->Init.ExtendedDataMode = DCMI_EXTEND_DATA_8B;
   phdcmi->Init.PCKPolarity      = DCMI_PCKPOLARITY_RISING;
+   if (format == FMT_JPEG) {
+	   phdcmi->Init.JPEGMode 		  = DCMI_JPEG_ENABLE;
+	   printf("enabled JPEG\n");
+   }
   phdcmi->Instance              = DCMI;
 
-  status = CAMERA_ERROR;
 
-
+    status = CAMERA_ERROR;
 	BSP_CAMERA_PwrDown();
     BSP_CAMERA_PwrUp();
 	HAL_Delay(1000);
@@ -306,23 +66,37 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
   {
 	printf("\nread ID correct\n");
     /* Initialize the camera driver structure */
-    camera_drv = &ov5640_drv;
-    CameraHwAddress = CAMERA_I2C_ADDRESS_OV5640;
+    //camera_drv = &ov5640_drv;
+    //CameraHwAddress = CAMERA_I2C_ADDRESS_OV5640;
+	    switch (format)
+	        {
+	    		case FMT_JPEG:
+	    		{
+	    			ov5640_Init_JPEG(x_res, y_res);
+	    			OV5640_Set_Comp_Ratio(jpeg_comp_ratio);
+	    			OV5640_Set_FIFO_Width(FIFO_width);
+	    			break;
+	    		}
+	    		case FMT_RGB565:
+	    		{
+	    			OV5640_Set_NightMode();
+	    			ov5640_Init_RGB565(x_res, y_res);
+	    			break;
+	    		}
+	    		default:
+	    		{
+	    			break;
+	    		}
+	        }
 
     /* DCMI Initialization */
     BSP_CAMERA_MspInit(&hDcmiHandler, NULL);
     HAL_DCMI_Init(phdcmi);
-
-
-      camera_drv->Init(CameraHwAddress, Resolution);
-      HAL_DCMI_DisableCROP(phdcmi);
-
-
-    CameraCurrentResolution = Resolution;
+    HAL_DCMI_DisableCROP(phdcmi);
 
     /*USER ADD CONFIG ====== */
-    OV5640_SetLightMode(CAMERA_I2C_ADDRESS_OV5640, OV5640_LIGHT_AUTO);
-    OV5640_MirrorFlipConfig(CAMERA_I2C_ADDRESS_OV5640, OV5640_FLIP);
+    //OV5640_SetLightMode(CAMERA_I2C_ADDRESS_OV5640, OV5640_LIGHT_AUTO);
+    //OV5640_MirrorFlipConfig(CAMERA_I2C_ADDRESS_OV5640, OV5640_FLIP);
     /*USER ADD CONFIG ====== */
     status = CAMERA_OK;
   }
@@ -338,10 +112,6 @@ uint8_t BSP_CAMERA_Init(uint32_t Resolution)
 #endif
 
 
-/**
-  * @brief  DeInitializes the camera.
-  * @retval Camera status
-  */
 uint8_t BSP_CAMERA_DeInit(void)
 { 
   hDcmiHandler.Instance              = DCMI;
@@ -351,52 +121,35 @@ uint8_t BSP_CAMERA_DeInit(void)
   return CAMERA_OK;
 }
 
-/**
-  * @brief  Starts the camera capture in continuous mode.
-  * @param  buff: pointer to the camera output buffer
-  * @retval None
-  */
-void BSP_CAMERA_ContinuousStart(uint8_t *buff)
+
+void BSP_CAMERA_ContinuousStart()
 { 
   /* Start the camera capture */
-  HAL_DCMI_Start_DMA(&hDcmiHandler, DCMI_MODE_CONTINUOUS, (uint32_t)buff, GetSize(CameraCurrentResolution));
+  HAL_DCMI_Start_DMA2(&hDcmiHandler, DCMI_MODE_CONTINUOUS, cam_fb, (CAM_FB_SIZE/4));//GetSize(CameraCurrentResolution)); //0x1900
 }
 
-/**
-  * @brief  Starts the camera capture in snapshot mode.
-  * @param  buff: pointer to the camera output buffer
-  * @retval None
-  */
+
 void BSP_CAMERA_SnapshotStart(uint8_t *buff)
 { 
   /* Start the camera capture */
   HAL_DCMI_Start_DMA(&hDcmiHandler, DCMI_MODE_SNAPSHOT, (uint32_t)buff, GetSize(CameraCurrentResolution));
 }
 
-/**
-  * @brief Suspend the CAMERA capture 
-  * @retval None
-  */
+
 void BSP_CAMERA_Suspend(void) 
 {
   /* Suspend the Camera Capture */
   HAL_DCMI_Suspend(&hDcmiHandler);  
 }
 
-/**
-  * @brief Resume the CAMERA capture 
-  * @retval None
-  */
+
 void BSP_CAMERA_Resume(void) 
 {
   /* Start the Camera Capture */
   HAL_DCMI_Resume(&hDcmiHandler);
 }
 
-/**
-  * @brief  Stop the CAMERA capture 
-  * @retval Camera status
-  */
+
 uint8_t BSP_CAMERA_Stop(void) 
 {
   uint8_t status = CAMERA_ERROR;
@@ -412,10 +165,7 @@ uint8_t BSP_CAMERA_Stop(void)
   return status;
 }
 
-/**
-  * @brief  CANERA power up
-  * @retval None
-  */
+
 void BSP_CAMERA_PwrUp(void)
 {
   GPIO_InitTypeDef gpio_init_structure;
@@ -437,10 +187,7 @@ void BSP_CAMERA_PwrUp(void)
   HAL_Delay(3);     /* POWER_DOWN de-asserted during 3ms */
 }
 
-/**
-  * @brief  CAMERA power down
-  * @retval None
-  */
+
 void BSP_CAMERA_PwrDown(void)
 {
   GPIO_InitTypeDef gpio_init_structure;
@@ -461,126 +208,7 @@ void BSP_CAMERA_PwrDown(void)
 
 }
 
-/**
-  * @brief  Configures the camera contrast and brightness.
-  * @param  contrast_level: Contrast level
-  *          This parameter can be one of the following values:
-  *            @arg  CAMERA_CONTRAST_LEVEL4: for contrast +2
-  *            @arg  CAMERA_CONTRAST_LEVEL3: for contrast +1
-  *            @arg  CAMERA_CONTRAST_LEVEL2: for contrast  0
-  *            @arg  CAMERA_CONTRAST_LEVEL1: for contrast -1
-  *            @arg  CAMERA_CONTRAST_LEVEL0: for contrast -2
-  * @param  brightness_level: Contrast level
-  *          This parameter can be one of the following values:
-  *            @arg  CAMERA_BRIGHTNESS_LEVEL4: for brightness +2
-  *            @arg  CAMERA_BRIGHTNESS_LEVEL3: for brightness +1
-  *            @arg  CAMERA_BRIGHTNESS_LEVEL2: for brightness  0
-  *            @arg  CAMERA_BRIGHTNESS_LEVEL1: for brightness -1
-  *            @arg  CAMERA_BRIGHTNESS_LEVEL0: for brightness -2    
-  * @retval None
-  */
-void BSP_CAMERA_ContrastBrightnessConfig(uint32_t contrast_level, uint32_t brightness_level)
-{
-  if(camera_drv->Config != NULL)
-  {
-    camera_drv->Config(CameraHwAddress, CAMERA_CONTRAST_BRIGHTNESS, contrast_level, brightness_level);
-  }  
-}
 
-/**
-  * @brief  Configures the camera white balance.
-  * @param  Mode: black_white mode
-  *          This parameter can be one of the following values:
-  *            @arg  CAMERA_BLACK_WHITE_BW
-  *            @arg  CAMERA_BLACK_WHITE_NEGATIVE
-  *            @arg  CAMERA_BLACK_WHITE_BW_NEGATIVE
-  *            @arg  CAMERA_BLACK_WHITE_NORMAL       
-  * @retval None
-  */
-void BSP_CAMERA_BlackWhiteConfig(uint32_t Mode)
-{
-  if(camera_drv->Config != NULL)
-  {
-    camera_drv->Config(CameraHwAddress, CAMERA_BLACK_WHITE, Mode, 0);
-  }  
-}
-
-/**
-  * @brief  Configures the camera color effect.
-  * @param  Effect: Color effect
-  *          This parameter can be one of the following values:
-  *            @arg  CAMERA_COLOR_EFFECT_ANTIQUE               
-  *            @arg  CAMERA_COLOR_EFFECT_BLUE        
-  *            @arg  CAMERA_COLOR_EFFECT_GREEN    
-  *            @arg  CAMERA_COLOR_EFFECT_RED        
-  * @retval None
-  */
-void BSP_CAMERA_ColorEffectConfig(uint32_t Effect)
-{
-  if(camera_drv->Config != NULL)
-  {
-    camera_drv->Config(CameraHwAddress, CAMERA_COLOR_EFFECT, Effect, 0);
-  }  
-}
-
-/**
-  * @brief  Get the capture size in pixels unit.
-  * @param  resolution: the current resolution.
-  * @retval capture size in pixels unit.
-  */
-static uint32_t GetSize(uint32_t resolution)
-{ 
-  uint32_t size = 0;
-  
-  /* Get capture size */
-  switch (resolution)
-  {
-  case CAMERA_R160x120:
-    {
-      size =  0x2580;
-    }
-    break;    
-  case CAMERA_R320x240:
-    {
-      //size =  0x9600;
-      //size = 0x3200; 1/3
-    	//size = 0xC80; 1/12
-    	size = 0x1900;
-
-
-    }
-    break;
-  case CAMERA_R480x272:
-    {
-      size =  0xFF00;
-    }
-    break;
-  case CAMERA_R640x480:
-    {
-      size =  0x25800;
-    }    
-    break;
-
-  case CAMERA_R320x240_JPEG:
-    {
-      size = 0x9600;
-    }
-    break;
-  default:
-    {
-      break;
-    }
-  }
-  
-  return size;
-}
-
-/**
-  * @brief  Initializes the DCMI MSP.
-  * @param  hdcmi: HDMI handle 
-  * @param  Params
-  * @retval None
-  */
 __weak void BSP_CAMERA_MspInit(DCMI_HandleTypeDef *hdcmi, void *Params)
 {
   static DMA_HandleTypeDef hdma_handler;
@@ -704,6 +332,7 @@ __weak void BSP_CAMERA_MspDeInit(DCMI_HandleTypeDef *hdcmi, void *Params)
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {        
   BSP_CAMERA_LineEventCallback();
+  packetCounter++;
 }
 
 /**
@@ -725,8 +354,26 @@ __weak void BSP_CAMERA_LineEventCallback(void)
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
 {        
   BSP_CAMERA_VsyncEventCallback();
-}
+  frameCounter++;
 
+  if (frameCounter > 20) {
+	  JPEG_search_Full_Frame();
+	  for (uint8_t i = 0; i < 20; i++) {
+		  printf("\n#: %i : Packet #: %i Fifo size : %i Hex Size ; %i difference %i \n",
+				  i, JPEG_PACKET_COUNT_BUFFER[i], JPEG_FIFO_SIZE_BUFFER[i], JPEG_HEX_SIZE_BUFFER[i],(JPEG_FIFO_SIZE_BUFFER[i] - JPEG_HEX_SIZE_BUFFER[i]) );
+	  }
+  }
+
+  JPEG_Size = packetCounter * FIFO_SIZE;
+  JPEG_FIFO_SIZE_BUFFER[frameCounter] = JPEG_Size;
+  JPEG_PACKET_COUNT_BUFFER[frameCounter - 1] = packetCounter;
+  packetCounter = 0;
+  JPEG_Size = 0;
+
+
+
+
+}
 /**
   * @brief  VSYNC Event callback.
   * @retval None
@@ -784,15 +431,233 @@ __weak void BSP_CAMERA_ErrorCallback(void)
   * @}
   */  
   
-/**
-  * @}
-  */
-  
-/**
-  * @}
-  */
-  
-/**
-  * @}
-  */      
+
+void FPSCalculate(void) {
+printf("\n%i FPS\n", frameCounter);
+	frameCounter = 0;
+}
+
+
+HAL_StatusTypeDef HAL_DCMI_Start_DMA2(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mode, uint32_t pData, uint32_t Length)
+{
+  /* Initialize the second memory address */
+  uint32_t SecondMemAddress = 0;
+
+  /* Check function parameters */
+  assert_param(IS_DCMI_CAPTURE_MODE(DCMI_Mode));
+
+  /* Process Locked */
+  __HAL_LOCK(hdcmi);
+
+  /* Lock the DCMI peripheral state */
+  hdcmi->State = HAL_DCMI_STATE_BUSY;
+
+  /* Enable DCMI by setting DCMIEN bit */
+  __HAL_DCMI_ENABLE(hdcmi);
+
+  /* Configure the DCMI Mode */
+  hdcmi->Instance->CR &= ~(DCMI_CR_CM);
+  hdcmi->Instance->CR |= (uint32_t)(DCMI_Mode);
+
+  /* Set the DMA memory0 conversion complete callback */
+  hdcmi->DMA_Handle->XferCpltCallback = DCMI_DMA_TRANSFER_COMPLETE;
+  hdcmi->DMA_Handle->XferHalfCpltCallback = DCMI_DMA_TRANSFER_HALF_COMPLETE;
+
+
+  /* Set the DMA error callback */
+  hdcmi->DMA_Handle->XferErrorCallback = DCMI_DMAError;
+
+  /* Set the dma abort callback */
+  hdcmi->DMA_Handle->XferAbortCallback = NULL;
+
+  /* Reset transfer counters value */
+  hdcmi->XferCount = 0;
+  hdcmi->XferTransferNumber = 0;
+  hdcmi->XferSize = 0;
+  hdcmi->pBuffPtr = 0;
+
+  if (Length <= 0xFFFFU)
+  {
+    /* Enable the DMA Stream */
+    if (HAL_DMA_Start_IT(hdcmi->DMA_Handle, (uint32_t)&hdcmi->Instance->DR, (uint32_t)pData, Length) != HAL_OK)
+    {
+      return HAL_ERROR;
+    }
+  }
+  else /* DCMI_DOUBLE_BUFFER Mode */
+  {
+    /* Set the DMA memory1 conversion complete callback */
+    hdcmi->DMA_Handle->XferM1CpltCallback = DCMI_DMAXferCplt;
+
+    /* Initialize transfer parameters */
+    hdcmi->XferCount = 1;
+    hdcmi->XferSize = Length;
+    hdcmi->pBuffPtr = pData;
+
+    /* Get the number of buffer */
+    while (hdcmi->XferSize > 0xFFFFU)
+    {
+      hdcmi->XferSize = (hdcmi->XferSize / 2U);
+      hdcmi->XferCount = hdcmi->XferCount * 2U;
+    }
+
+    /* Update DCMI counter  and transfer number*/
+    hdcmi->XferCount = (hdcmi->XferCount - 2U);
+    hdcmi->XferTransferNumber = hdcmi->XferCount;
+
+    /* Update second memory address */
+    SecondMemAddress = (uint32_t)(pData + (4 * hdcmi->XferSize));
+
+    /* Start DMA multi buffer transfer */
+    if (HAL_DMAEx_MultiBufferStart_IT(hdcmi->DMA_Handle, (uint32_t)&hdcmi->Instance->DR, (uint32_t)pData, SecondMemAddress, hdcmi->XferSize) != HAL_OK)
+    {
+      return HAL_ERROR;
+    }
+  }
+
+  /* Enable Capture */
+  hdcmi->Instance->CR |= DCMI_CR_CAPTURE;
+
+  /* Release Lock */
+  __HAL_UNLOCK(hdcmi);
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+
+void DCMI_DMA_TRANSFER_COMPLETE(DMA_HandleTypeDef *hdma)
+{
+  //printf("\n FULL transfer complete\n");
+  //JPEG_search();
+  uint32_t tmp = 0;
+  cam_data_location = &cam_fb;
+ //buffer_offset = 0;//CAM_FB_SIZE / 2;
+
+  DCMI_HandleTypeDef *hdcmi = (DCMI_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdcmi->XferCount != 0)
+  {
+    /* Update memory 0 address location */
+    tmp = ((hdcmi->DMA_Handle->Instance->CR) & DMA_SxCR_CT);
+    if (((hdcmi->XferCount % 2) == 0) && (tmp != 0))
+    {
+      tmp = hdcmi->DMA_Handle->Instance->M0AR;
+      HAL_DMAEx_ChangeMemory(hdcmi->DMA_Handle, (tmp + (8 * hdcmi->XferSize)), MEMORY0);
+      hdcmi->XferCount--;
+    }
+    /* Update memory 1 address location */
+    else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) == 0)
+    {
+      tmp = hdcmi->DMA_Handle->Instance->M1AR;
+      HAL_DMAEx_ChangeMemory(hdcmi->DMA_Handle, (tmp + (8 * hdcmi->XferSize)), MEMORY1);
+      hdcmi->XferCount--;
+    }
+  }
+  /* Update memory 0 address location */
+  else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) != 0)
+  {
+    hdcmi->DMA_Handle->Instance->M0AR = hdcmi->pBuffPtr;
+  }
+  /* Update memory 1 address location */
+  else if ((hdcmi->DMA_Handle->Instance->CR & DMA_SxCR_CT) == 0)
+  {
+    tmp = hdcmi->pBuffPtr;
+    hdcmi->DMA_Handle->Instance->M1AR = (tmp + (4 * hdcmi->XferSize));
+    hdcmi->XferCount = hdcmi->XferTransferNumber;
+  }
+
+  /* Enable the Frame interrupt */
+  //frame_packet_data_available2 = true;
+
+  /* Check if the frame is transferred */
+  if (hdcmi->XferCount == hdcmi->XferTransferNumber)
+  {
+	__HAL_DCMI_ENABLE_IT(hdcmi, DCMI_IT_FRAME);
+
+	}
+
+    /* When snapshot mode, set dcmi state to ready */
+    if ((hdcmi->Instance->CR & DCMI_CR_CM) == DCMI_MODE_SNAPSHOT)
+    {
+      hdcmi->State = HAL_DCMI_STATE_READY;
+    }
+  }
+
+void DCMI_DMA_TRANSFER_HALF_COMPLETE(DMA_HandleTypeDef *hdma) {
+	//frame_packet_data_available1 = true;
+	  cam_data_location = &cam_fb + (CAM_FB_SIZE /2);
+	  //printf("\n Half transfer complete\n");
+
+}
+
+//void Get_JPEG_Size(void) {
+//
+//}
+
+void JPEG_search_mini(void) {
+//	uint32_t i=0;
+//	for(i=0;i<(CAM_FB_SIZE/2);i++)//search for 0XFF 0XD8 and 0XFF 0XD9, get size of JPG
+//	{
+//		JPEG_counter = JPEG_counter + 1;
+//		if((jpeg_search_buffer[i] ==0XFF)&&((jpeg_search_buffer[i + 1])==0XD8))
+//		{
+//			//current_JPEG_size = JPEG_counter;
+//			printf("found JPEG\n");
+//			//JPEG_counter = 0;
+//
+//		} else {
+//			printf("done JPEG search\n");
+//			break;
+//		}
+//	}
+}
+
+void JPEG_search_Full_Frame(void) {
+			printf("\nsearching frame\n");
+			//uint8_t *p;
+	        uint32_t i=0,jpgstart=0,jpglen=0, padding_counter = 0;
+	        uint8_t  head=0;
+	        uint8_t found_jpeg_footer;
+	        uint8_t jpeg_frame_counter = 1;
+
+	        HAL_DCMI_Stop(&hDcmiHandler);
+
+	        //p=(uint8_t*)cam_fb;
+
+	        for(i=0;i<CAM_FB_SIZE; i++)//search for 0XFF 0XD8 and 0XFF 0XD9, get size of JPG
+	        {
+	                if((cam_fb[i]==0XFF)&&(cam_fb[i+1]==0XD8))
+	                {
+	                		found_jpeg_footer = 0;
+	                		//printf("%i, total size: %d \r\n", jpeg_frame_counter, (jpglen + padding_counter)); //+ offset
+	                		JPEG_HEX_SIZE_BUFFER[jpeg_frame_counter] = jpglen + padding_counter;
+	                		padding_counter = 0;
+	                		jpeg_frame_counter++;
+
+
+
+	                        jpgstart=i;
+	                        head=1;	// Already found  FF D8
+	                        printf("\nfound header\n");
+	                }
+	                if((cam_fb[i]==0XFF)&&(cam_fb[i+1]==0XD9)&&head) //search for FF D9
+	                {
+                        	printf("\nfound footer\n");
+	                        jpglen=i-jpgstart+2;
+	                        found_jpeg_footer = 1;
+	                }
+	                if(((found_jpeg_footer == 1) && (cam_fb[i] == 0x00)) && (cam_fb[i+1]!=0XFF)&&(cam_fb[i+2]!=0XD8)) {
+	                	padding_counter++;
+	                }
+
+	        }
+	        if(jpglen)
+	        {
+
+	                printf("padding :  %d \r\n" , padding_counter);
+	                //printf("jpgstart :  %d \r\n" , jpgstart);
+	        }
+}
+
 

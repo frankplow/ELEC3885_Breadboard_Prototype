@@ -25,32 +25,21 @@
  extern "C" {
 #endif 
 
-/* Includes ------------------------------------------------------------------*/
-/* Include Camera component Driver */
-#include "ov2640.h"
-#include "ov9655.h"
-#include "ov5640.h"
-#include "stm32746g_discovery.h"
 
-/** @addtogroup BSP
-  * @{
-  */
+#include "ov5640_driver.h"
+#include "camera_I2C.h"
+#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_dcmi.h"
+#include "Cam_settings.h"
 
-/** @addtogroup STM32746G_DISCOVERY
-  * @{
-  */
-    
-/** @addtogroup STM32746G_DISCOVERY_CAMERA
-  * @{
-  */ 
-   
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Exported_Types STM32746G_DISCOVERY_CAMERA Exported Types
-  * @{
-  */
-  
-/** 
-  * @brief  Camera State structures definition  
-  */  
+#define X_RES 320
+#define Y_RES 240
+#define CAM_FB_SIZE X_RES * Y_RES * 2
+#define FIFO_SIZE 40
+
+extern uint8_t cam_fb[CAM_FB_SIZE]; //[CAM_FB_SIZE];
+
+
 typedef enum 
 {
   CAMERA_OK            = 0x00,
@@ -61,30 +50,13 @@ typedef enum
 
 } Camera_StatusTypeDef;
 
-#define RESOLUTION_R160x120      CAMERA_R160x120      /* QQVGA Resolution     */
-#define RESOLUTION_R320x240      CAMERA_R320x240      /* QVGA Resolution      */
-#define RESOLUTION_R480x272      CAMERA_R480x272      /* 480x272 Resolution   */
-#define RESOLUTION_R640x480      CAMERA_R640x480      /* VGA Resolution       */  
-/**
-  * @}
-  */ 
- 
-/** @defgroup STM32746G_DISCOVERY_CAMERA_Exported_Constants STM32746G_DISCOVERY_CAMERA Exported Constants
-  * @{
-  */
+
 #define BSP_CAMERA_IRQHandler      DCMI_IRQHandler
 #define BSP_CAMERA_DMA_IRQHandler  DMA2_Stream1_IRQHandler  
 
-/**
-  * @}
-  */
-
-/** @addtogroup STM32746G_DISCOVERY_CAMERA_Exported_Functions
-  * @{
-  */    
-uint8_t BSP_CAMERA_Init(uint32_t Resolution);  
+uint8_t CAM_Init(uint8_t format, uint16_t x_res, uint16_t y_res, uint16_t FPS, uint16_t FB_size, uint16_t FIFO_width, uint8_t jpeg_comp_ratio);
 uint8_t BSP_CAMERA_DeInit(void);
-void    BSP_CAMERA_ContinuousStart(uint8_t *buff);
+void    BSP_CAMERA_ContinuousStart();
 void    BSP_CAMERA_SnapshotStart(uint8_t *buff);
 void    BSP_CAMERA_Suspend(void);
 void    BSP_CAMERA_Resume(void);
@@ -96,24 +68,19 @@ void    BSP_CAMERA_VsyncEventCallback(void);
 void    BSP_CAMERA_FrameEventCallback(void);
 void    BSP_CAMERA_ErrorCallback(void);
 
-/* Camera features functions prototype */
-void    BSP_CAMERA_ContrastBrightnessConfig(uint32_t contrast_level, uint32_t brightness_level);
-void    BSP_CAMERA_BlackWhiteConfig(uint32_t Mode);
-void    BSP_CAMERA_ColorEffectConfig(uint32_t Effect);
-   
-/* These functions can be modified in case the current settings (e.g. DMA stream)
-   need to be changed for specific application needs */
+void FPSCalculate(void);
+void JPEG_search_mini(void);
+void JPEG_search_Full_Frame(void);
+
+
 void BSP_CAMERA_MspInit(DCMI_HandleTypeDef *hdcmi, void *Params);
 void BSP_CAMERA_MspDeInit(DCMI_HandleTypeDef *hdcmi, void *Params);
 
+HAL_StatusTypeDef HAL_DCMI_Start_DMA2(DCMI_HandleTypeDef *hdcmi, uint32_t DCMI_Mode, uint32_t pData, uint32_t Length);
 
-/**
-  * @}
-  */ 
+void dcmi_dma_Half_TC_callback(DMA_HandleTypeDef *hdma);
+void dcmi_dma_Full_TC_callback(DMA_HandleTypeDef *_hdma);
 
-/**
-  * @}
-  */ 
 
 /**
   * @}

@@ -220,7 +220,8 @@ void TIM3_IRQHandler(void)
   /* USER CODE BEGIN TIM3_IRQn 1 */
 //  printf("FPS: %i ", frameCounter);
 //  frameCounter = 0;
-  FPSCalculate();
+  //FPSCalculate();
+  //JPEG_search();
   /* USER CODE END TIM3_IRQn 1 */
 }
 
