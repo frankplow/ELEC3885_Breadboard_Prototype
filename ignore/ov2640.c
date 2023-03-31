@@ -1255,7 +1255,7 @@ void ov2640_Init(uint16_t DeviceAddr, uint32_t resolution)
       } 
       break;
     }    
-  case CAMERA_R320x240_JPEG: //JPEG
+  case CAMERA_R320x240: //JPEG
     {
       for(index=0; index<(sizeof(OV2640_JPEG)/2); index++)
       {
@@ -1284,16 +1284,16 @@ void ov2640_Init(uint16_t DeviceAddr, uint32_t resolution)
 	}
 	break;
 }
-  case CAMERA_R320x240:
-  {
-	  for(index=0; index<(sizeof(OV2640_QVGA)/2); index++)
-	  {
-		  CAMERA_IO_Write(DeviceAddr, OV2640_QVGA[index][0],
-		  OV2640_QVGA[index][1]);
-		  CAMERA_Delay(1);
-	  }
-	  break;
-  }
+//  case CAMERA_R320x240:
+//  {
+//	  for(index=0; index<(sizeof(OV2640_QVGA)/2); index++)
+//	  {
+//		  CAMERA_IO_Write(DeviceAddr, OV2640_QVGA[index][0],
+//		  OV2640_QVGA[index][1]);
+//		  CAMERA_Delay(1);
+//	  }
+//	  break;
+//  }
   default:
     {
       break;
